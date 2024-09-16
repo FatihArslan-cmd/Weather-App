@@ -2,25 +2,25 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { IconButton, Text } from 'react-native-paper';
 import getWindDirection from '../utils/getWindDirection';
-
+import CustomText from './CustomText';
 const WeatherDetails = ({ weather }) => {
   return (
     <View>
       <View style={styles.detailsRow}>
         <View style={styles.detailItem}>
           <IconButton icon="water" size={20} />
-          <Text style={styles.detailText}>Nem: {weather.main.humidity}%</Text>
+          <CustomText fontFamily="pop" style={styles.detailText}>Nem: {weather.main.humidity}%</CustomText>
         </View>
         <View style={styles.detailItem}>
           <IconButton icon="weather-windy" size={20} />
-          <Text style={styles.detailText}>
+          <CustomText fontFamily="pop" style={styles.detailText}>
             Rüzgar: {weather.wind.speed} m/s, {getWindDirection(weather.wind.deg)}
-          </Text>
+          </CustomText>
         </View>
       </View>
       <View style={styles.detailItemCenter}>
         <IconButton icon="speedometer" size={20} />
-        <Text style={styles.detailText}>Basınç: {weather.main.pressure} hPa</Text>
+        <CustomText fontFamily="pop" style={styles.detailText}>Basınç: {weather.main.pressure} hPa</CustomText>
       </View>
     </View>
   );

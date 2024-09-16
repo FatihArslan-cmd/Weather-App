@@ -2,7 +2,7 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, Image, View } from 'react-native';
 import { Card } from 'react-native-paper';
 import translateWeatherDescription from '../utils/translateWeatherDescription';
-
+import CustomText from './CustomText';
 const HourlyWeatherCard = ({ hourlyWeather }) => {
   return (
     <Card style={styles.containerCard}>
@@ -11,15 +11,15 @@ const HourlyWeatherCard = ({ hourlyWeather }) => {
           <View style={styles.hourlyWeatherContainer}>
             {hourlyWeather.map((hourData, index) => (
               <View key={index} style={styles.hourlyItem}>
-                <Text style={styles.hourText}>{new Date(hourData.dt * 1000).getHours()}:00</Text>
+                <CustomText fontFamily="pop" style={styles.hourText}>{new Date(hourData.dt * 1000).getHours()}:00</CustomText>
                 <Image
                   source={{ uri: `https://openweathermap.org/img/wn/${hourData.weather[0].icon}@2x.png` }}
                   style={styles.weatherIcon}
                 />
-                <Text style={styles.weatherText}>
+                <CustomText fontFamily="pop" style={styles.weatherText}>
                   {translateWeatherDescription(hourData.weather[0].description)}
-                </Text>
-                <Text style={styles.tempText}>{hourData.main.temp}°C</Text>
+                </CustomText >
+                <CustomText fontFamily="pop" style={styles.tempText}>{hourData.main.temp}°C</CustomText>
               </View>
             ))}
           </View>
@@ -47,7 +47,6 @@ const styles = StyleSheet.create({
   },
   hourText: {
     fontSize: 16,
-    fontWeight: 'bold',
   },
   weatherText: {
     fontSize: 14,
@@ -56,7 +55,6 @@ const styles = StyleSheet.create({
   },
   tempText: {
     fontSize: 18,
-    fontWeight: 'bold',
     textAlign: 'center',
   },
 });

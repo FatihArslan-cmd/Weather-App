@@ -3,12 +3,13 @@ import { View, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import axios from 'axios';
+import { LinearGradient } from 'expo-linear-gradient'; // Import LinearGradient
 import RefreshScrollView from './components/RefreshScrollView';
 import WeatherCard from './components/WeatherCard';
 import HourlyWeatherCard from './components/HourlyWeatherCard';
 import LocationCard from './components/LocationCard'; // Import the new component
 import updateDateTime from './utils/updateDateTime';
-import API_KEY from './API_KEY.';
+import API_KEY from './API_KEY';
 
 const App = () => {
   const [weather, setWeather] = useState(null);
@@ -88,11 +89,16 @@ const App = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <RefreshScrollView refreshing={refreshing} onRefresh={onRefresh}>
-        {address && <LocationCard address={address} />}
-        <WeatherCard dateTime={dateTime} weather={weather} loading={loading} error={error} />
-        <HourlyWeatherCard hourlyWeather={hourlyWeather} />
-      </RefreshScrollView>
+      <LinearGradient
+        colors={['#87CEEB', '#00BFFF']} // Define your gradient colors
+        style={styles.gradient}
+      >
+        <RefreshScrollView refreshing={refreshing} onRefresh={onRefresh}>
+          {address && <LocationCard address={address} />}
+          <WeatherCard dateTime={dateTime} weather={weather} loading={loading} error={error} />
+          <HourlyWeatherCard hourlyWeather={hourlyWeather} />
+        </RefreshScrollView>
+      </LinearGradient>
     </SafeAreaView>
   );
 };
@@ -100,10 +106,12 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#87CEEB',
-    padding: 10,
+  },
+  gradient: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding:10
   },
 });
 
