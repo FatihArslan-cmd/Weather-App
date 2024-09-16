@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StatusBar, StyleSheet,Text } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import axios from 'axios';
 import RefreshScrollView from './components/RefreshScrollView';
 import WeatherCard from './components/WeatherCard';
 import HourlyWeatherCard from './components/HourlyWeatherCard';
+import LocationCard from './components/LocationCard'; // Import the new component
 import updateDateTime from './utils/updateDateTime';
 import API_KEY from './API_KEY.';
 
@@ -16,6 +18,7 @@ const App = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [dateTime, setDateTime] = useState('');
   const [hourlyWeather, setHourlyWeather] = useState([]);
+  const [address, setAddress] = useState('');
 
   useEffect(() => {
     getLocationAsync();
@@ -31,6 +34,18 @@ const App = () => {
     }
     let location = await Location.getCurrentPositionAsync({});
     setLocation(location.coords);
+
+    // Reverse geocoding to get street-level location
+    const addressArray = await Location.reverseGeocodeAsync({
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+    });
+
+    if (addressArray.length > 0) {
+      const { street, city, region } = addressArray[0];
+      setAddress(`${street}, ${city}, ${region}`);
+    }
+
     fetchWeatherByLocation(location.coords.latitude, location.coords.longitude);
     fetchHourlyWeather(location.coords.latitude, location.coords.longitude);
   };
@@ -72,12 +87,13 @@ const App = () => {
   }, [location]);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <RefreshScrollView refreshing={refreshing} onRefresh={onRefresh}>
+        {address && <LocationCard address={address} />}
         <WeatherCard dateTime={dateTime} weather={weather} loading={loading} error={error} />
         <HourlyWeatherCard hourlyWeather={hourlyWeather} />
       </RefreshScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -85,8 +101,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#87CEEB',
+    padding: 10,
     justifyContent: 'center',
-    padding: 20,
+    alignItems: 'center',
   },
 });
 

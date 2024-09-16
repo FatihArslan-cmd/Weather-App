@@ -30,7 +30,6 @@ const styles = StyleSheet.create({
   detailsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginVertical: 10,
   },
   detailItem: {
     flexDirection: 'row',
