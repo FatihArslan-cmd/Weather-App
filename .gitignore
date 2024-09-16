@@ -33,3 +33,7 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+.env
+
+API_KEY.js
