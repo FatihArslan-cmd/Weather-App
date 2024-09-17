@@ -102,28 +102,36 @@ const App = () => {
     if (city.isCurrentLocation) {
       await fetchWeatherByLocation(location.latitude, location.longitude);
       await fetchHourlyWeather(location.latitude, location.longitude);
-      await fetchAirQuality(location.latitude, location.longitude);
+      await fetchAirQuality(location.latitude, location.longitude); // Hava kalitesini de fetch et
     } else {
       try {
         const response = await axios.get(
           `https://api.openweathermap.org/data/2.5/weather?q=${city.name}&appid=${API_KEY}&units=metric`
         );
         setWeather(response.data);
-
+  
         const hourlyResponse = await axios.get(
           `https://api.openweathermap.org/data/2.5/forecast?q=${city.name}&appid=${API_KEY}&units=metric`
         );
         setHourlyWeather(hourlyResponse.data.list.slice(0, 10));
-
+  
+        // Hava kalitesi için de bir API çağrısı yapalım
+        const airQualityResponse = await axios.get(
+          `https://api.openweathermap.org/data/2.5/air_pollution?lat=${response.data.coord.lat}&lon=${response.data.coord.lon}&appid=${API_KEY}`
+        );
+        setAirQuality(airQualityResponse.data);
+  
         setError('');
       } catch (err) {
         setError('Hava durumu bilgisi alınamadı.');
         setWeather(null);
         setHourlyWeather([]);
+        setAirQuality(null); // Hata durumunda hava kalitesini de sıfırla
       }
     }
     setLoading(false);
   };
+  
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
