@@ -1,19 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import axios from 'axios';
-import { LinearGradient } from 'expo-linear-gradient'; // Import LinearGradient
+import { LinearGradient } from 'expo-linear-gradient';
 import RefreshScrollView from './components/RefreshScrollView';
 import WeatherCard from './components/WeatherCard';
 import HourlyWeatherCard from './components/HourlyWeatherCard';
-import LocationCard from './components/LocationCard'; // Import the new component
+import LocationCard from './components/LocationCard';
 import updateDateTime from './utils/updateDateTime';
+import { Wave } from 'react-native-animated-spinkit';
 import API_KEY from './API_KEY';
 
 const App = () => {
   const [weather, setWeather] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Set initial loading state to true
   const [error, setError] = useState('');
   const [location, setLocation] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -31,6 +32,7 @@ const App = () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Konum izni reddedildi', 'Konum izni olmadan hava durumu gösterilemez.');
+      setLoading(false); // Hide loading if permission is not granted
       return;
     }
     let location = await Location.getCurrentPositionAsync({});
@@ -47,12 +49,12 @@ const App = () => {
       setAddress(`${street}, ${city}, ${region}`);
     }
 
-    fetchWeatherByLocation(location.coords.latitude, location.coords.longitude);
-    fetchHourlyWeather(location.coords.latitude, location.coords.longitude);
+    await fetchWeatherByLocation(location.coords.latitude, location.coords.longitude);
+    await fetchHourlyWeather(location.coords.latitude, location.coords.longitude);
+    setLoading(false); // Hide loading after fetching data
   };
 
   const fetchWeatherByLocation = async (lat, lon) => {
-    setLoading(true);
     try {
       const response = await axios.get(
         `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
@@ -62,11 +64,22 @@ const App = () => {
     } catch (err) {
       setError('Hava durumu bilgisi alınamadı.');
       setWeather(null);
-    } finally {
-      setLoading(false);
     }
   };
-
+  const handleCitySelect = async (city) => {
+    if (city.countryCode) {
+      const { name, countryCode } = city;
+      // Use the city name to fetch coordinates using an API
+      // For simplicity, let's assume you have a utility to get coordinates by city name.
+      const { lat, lon } = await getCoordinatesByCityName(name);
+      await fetchWeatherByLocation(lat, lon);
+      await fetchHourlyWeather(lat, lon);
+    } else {
+      // Current location was selected
+      await fetchWeatherByLocation(location.latitude, location.longitude);
+      await fetchHourlyWeather(location.latitude, location.longitude);
+    }
+  };
   const fetchHourlyWeather = async (lat, lon) => {
     try {
       const response = await axios.get(
@@ -90,15 +103,25 @@ const App = () => {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={['#87CEEB', '#00BFFF']} // Define your gradient colors
+        colors={['#87CEEB', '#00BFFF']}
         style={styles.gradient}
       >
         <RefreshScrollView refreshing={refreshing} onRefresh={onRefresh}>
-          {address && <LocationCard address={address} />}
+          <LocationCard address={address} onSelectCity={handleCitySelect} />
           <WeatherCard dateTime={dateTime} weather={weather} loading={loading} error={error} />
           <HourlyWeatherCard hourlyWeather={hourlyWeather} />
         </RefreshScrollView>
       </LinearGradient>
+
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={loading}
+      >
+        <View style={styles.loadingOverlay}>
+          <Wave size={48} color="#02CCFE" />
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -111,7 +134,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding:10
+    padding: 10,
+  },
+  loadingOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
   },
 });
 
