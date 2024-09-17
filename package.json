@@ -9,10 +9,12 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^2.0.0",
     "axios": "^1.7.7",
     "expo": "~51.0.28",
     "expo-font": "^12.0.10",
     "expo-linear-gradient": "~13.0.2",
+    "expo-localization": "~15.0.3",
     "expo-location": "~17.0.1",
     "expo-status-bar": "~1.12.1",
     "react": "18.2.0",
@@ -26,8 +28,7 @@
     "react-native-paper": "^5.12.5",
     "react-native-reanimated": "^3.15.2",
     "react-native-skeleton-placeholder": "^5.2.4",
-    "react-native-ui-lib": "^7.30.0",
-    "expo-localization": "~15.0.3"
+    "react-native-ui-lib": "^7.30.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
