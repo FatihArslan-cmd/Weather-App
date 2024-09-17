@@ -1,5 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, Alert, Modal, Image, StatusBar } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  View,
+  StyleSheet,
+  Alert,
+  Modal,
+  Image,
+  StatusBar,
+  Animated,
+  ScrollView,
+  RefreshControl
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import axios from 'axios';
@@ -28,13 +38,17 @@ const App = () => {
   const [selectedCity, setSelectedCity] = useState(null);
   const [uvIndex, setUVIndex] = useState(null);
 
+  // Animated value for scroll position
+  const scrollY = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     getLocationAsync();
   }, []);
+
   const handleCitySelect = async (city) => {
     setLoading(true);
     setSelectedCity(city); // Save the selected city
-  
+
     if (city.isCurrentLocation) {
       // Mevcut konum
       await fetchWeatherByLocation(location.latitude, location.longitude);
@@ -48,23 +62,23 @@ const App = () => {
           `https://api.openweathermap.org/data/2.5/weather?q=${city.name}&appid=${API_KEY}&units=metric`
         );
         setWeather(response.data);
-  
+
         const hourlyResponse = await axios.get(
           `https://api.openweathermap.org/data/2.5/forecast?q=${city.name}&appid=${API_KEY}&units=metric`
         );
         setHourlyWeather(hourlyResponse.data.list.slice(0, 10));
-  
+
         const airQualityResponse = await axios.get(
           `https://api.openweathermap.org/data/2.5/air_pollution?lat=${response.data.coord.lat}&lon=${response.data.coord.lon}&appid=${API_KEY}`
         );
         setAirQuality(airQualityResponse.data);
-  
+
         // UV Endeksi
         const uvIndexResponse = await axios.get(
           `https://api.openweathermap.org/data/2.5/uvi?lat=${response.data.coord.lat}&lon=${response.data.coord.lon}&appid=${API_KEY}`
         );
         setUVIndex(uvIndexResponse.data.value);
-  
+
         setError('');
       } catch (err) {
         setError('Hava durumu bilgisi alınamadı.');
@@ -185,14 +199,23 @@ const App = () => {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient colors={['#87CEEB', '#00BFFF']} style={styles.gradient}>
-        <RefreshScrollView refreshing={refreshing} onRefresh={onRefresh}>
+        <View style={styles.locationCardContainer}>
           <LocationCard address={address} onSelectCity={handleCitySelect} />
-          <WeatherCard weather={weather} loading={loading} error={error} />
+        </View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: false } // Change to `true` if you're animating transform properties only
+          )}
+        >
+          <WeatherCard weather={weather} />
           <HourlyWeatherCard hourlyWeather={hourlyWeather} />
           <AirQualityScreen airQuality={airQuality} />
           <UVIndexScreen uvIndex={uvIndex} />
           <StatusBar backgroundColor="#87CEEB" barStyle="light-content" translucent />
-        </RefreshScrollView>
+        </ScrollView>
       </LinearGradient>
 
       <Modal transparent={true} animationType="fade" visible={loading}>
@@ -212,14 +235,25 @@ const styles = StyleSheet.create({
   },
   gradient: {
     flex: 1,
-    padding: 10,
+  },
+  locationCardContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  scrollContainer: {
+    paddingTop: 120, // Adjust this value to fit the height of the LocationCard
   },
   loadingOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#e9e6d9',
-   },
+  },
 });
 
 export default App;

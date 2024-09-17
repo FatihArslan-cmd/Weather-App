@@ -28,7 +28,8 @@
     "react-native-paper": "^5.12.5",
     "react-native-reanimated": "^3.15.2",
     "react-native-skeleton-placeholder": "^5.2.4",
-    "react-native-ui-lib": "^7.30.0"
+    "react-native-ui-lib": "^7.30.0",
+    "react-native-maps": "1.14.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
