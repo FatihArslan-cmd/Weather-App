@@ -11,7 +11,7 @@ import LocationCard from './components/LocationCard';
 import { Fold } from 'react-native-animated-spinkit';
 import API_KEY from './API_KEY';
 import AirQualityScreen from './components/AirQuality';
-
+import UVIndexScreen from './components/UVIndexScreen';
 const App = () => {
   const [weather, setWeather] = useState(null);
   const [airQuality, setAirQuality] = useState(null);
@@ -22,6 +22,7 @@ const App = () => {
   const [hourlyWeather, setHourlyWeather] = useState([]);
   const [address, setAddress] = useState('');
   const [selectedCity, setSelectedCity] = useState(null); // Track the selected city
+  const [uvIndex, setUVIndex] = useState(null);
 
   useEffect(() => {
     getLocationAsync();
@@ -50,6 +51,8 @@ const App = () => {
     await fetchWeatherByLocation(location.coords.latitude, location.coords.longitude);
     await fetchHourlyWeather(location.coords.latitude, location.coords.longitude);
     await fetchAirQuality(location.coords.latitude, location.coords.longitude); 
+    await fetchUVIndex(location.coords.latitude, location.coords.longitude);
+
     setLoading(false);
   };
 
@@ -99,11 +102,16 @@ const App = () => {
   const handleCitySelect = async (city) => {
     setLoading(true);
     setSelectedCity(city); // Save the selected city
+  
     if (city.isCurrentLocation) {
+      // Mevcut konum
       await fetchWeatherByLocation(location.latitude, location.longitude);
       await fetchHourlyWeather(location.latitude, location.longitude);
-      await fetchAirQuality(location.latitude, location.longitude); // Hava kalitesini de fetch et
+      await fetchAirQuality(location.latitude, location.longitude);
+      await fetchUVIndex(location.latitude, location.longitude); // UV Endeksi
+  
     } else {
+      // Şehir ismiyle hava durumu
       try {
         const response = await axios.get(
           `https://api.openweathermap.org/data/2.5/weather?q=${city.name}&appid=${API_KEY}&units=metric`
@@ -115,23 +123,39 @@ const App = () => {
         );
         setHourlyWeather(hourlyResponse.data.list.slice(0, 10));
   
-        // Hava kalitesi için de bir API çağrısı yapalım
         const airQualityResponse = await axios.get(
           `https://api.openweathermap.org/data/2.5/air_pollution?lat=${response.data.coord.lat}&lon=${response.data.coord.lon}&appid=${API_KEY}`
         );
         setAirQuality(airQualityResponse.data);
+  
+        // UV Endeksi
+        const uvIndexResponse = await axios.get(
+          `https://api.openweathermap.org/data/2.5/uvi?lat=${response.data.coord.lat}&lon=${response.data.coord.lon}&appid=${API_KEY}`
+        );
+        setUVIndex(uvIndexResponse.data.value);
   
         setError('');
       } catch (err) {
         setError('Hava durumu bilgisi alınamadı.');
         setWeather(null);
         setHourlyWeather([]);
-        setAirQuality(null); // Hata durumunda hava kalitesini de sıfırla
+        setAirQuality(null); // Hata durumunda hava kalitesini sıfırla
+        setUVIndex(null); // Hata durumunda UV endeksini sıfırla
       }
     }
     setLoading(false);
   };
-  
+  const fetchUVIndex = async (lat, lon) => {
+    try {
+      const response = await axios.get(
+        `https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${API_KEY}`
+      );
+      setUVIndex(response.data.value);
+    } catch (err) {
+      console.log('UV index error:', err);
+      setUVIndex(null);
+    }
+  };
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -155,6 +179,7 @@ const App = () => {
           <WeatherCard weather={weather} loading={loading} error={error} />
           <HourlyWeatherCard hourlyWeather={hourlyWeather} />
           <AirQualityScreen airQuality={airQuality} />
+          <UVIndexScreen uvIndex={uvIndex} />
           <StatusBar backgroundColor="#87CEEB" barStyle="light-content" translucent />
         </RefreshScrollView>
       </LinearGradient>

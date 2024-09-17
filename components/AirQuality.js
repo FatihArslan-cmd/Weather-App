@@ -10,7 +10,7 @@ const getAirQualityDetails = (aqi) => {
     case 2:
       return { text: 'İyi', icon: require('../assets/feedback-review.png'), color: '#47ad4b' };
     case 3:
-      return { text: 'Tolere edilebilir', icon: require('../assets/unlike.png'), color: 'orange' };
+      return { text: 'Ortalama', icon: require('../assets/unlike.png'), color: 'orange' };
     case 4:
       return { text: 'Kötü', icon: require('../assets/chat.png'), color: '#FF5722' };
     case 5:
