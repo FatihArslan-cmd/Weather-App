@@ -1,62 +1,94 @@
 import React from 'react';
-import { View, Image, StyleSheet, Text } from 'react-native'; // Import Text from react-native
-import CustomText from './CustomText'; // Ensure CustomText wraps a <Text> component
+import { View, Image, StyleSheet, FlatList } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import CustomText from './CustomText'; // Assuming you are using CustomText component
 
 const DailyWeatherCard = ({ dailyWeather }) => {
-  return (
-    <View style={styles.containerCard}>
-      {dailyWeather.map((dayData, index) => (
-        <View key={index} style={styles.dayContainer}>
-          {/* Make sure CustomText uses <Text> internally */}
-          <CustomText fontFamily="pop" style={styles.dayText}>
-            
-          </CustomText>
+  // Format the day from the timestamp
+  const getDayOfWeek = (timestamp) => {
+    const date = new Date(timestamp * 1000);
+    const options = { weekday: 'long' };
+    return date.toLocaleDateString('tr-TR', options); // Adjust locale if needed
+  };
 
+  // Render each day's weather
+  const renderItem = ({ item }) => {
+    return (
+      <LinearGradient colors={['#FFDEE9', '#B5FFFC']} style={styles.dayCard}>
+        <View style={styles.dayContainer}>
+          <Text style={styles.dayText}>{getDayOfWeek(item.dt)}</Text>
           <Image
-            source={{ uri: `https://openweathermap.org/img/wn/${dayData.weather[0].icon}@2x.png` }}
             style={styles.weatherIcon}
+            source={{ uri: `http://openweathermap.org/img/wn/${item.weather[0].icon}@2x.png` }}
           />
-
-          {/* Wrapping with <Text> to fix the issue */}
           <Text style={styles.tempText}>
-            h
+            {Math.round(item.temp.day)}°C
           </Text>
+          <Text style={styles.weatherDesc}>{item.weather[0].description}</Text>
         </View>
-      ))}
+      </LinearGradient>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Günlük Hava Durumu</Text>
+      <FlatList
+        data={dailyWeather}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.dt.toString()}
+        horizontal={true}
+        showsHorizontalScrollIndicator={false}
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  containerCard: {
-    borderRadius: 10,
-    marginVertical: 10,
+  container: {
+    marginVertical: 20,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  dayCard: {
+    flex: 1,
+    width: 120,
     padding: 10,
-    backgroundColor: '#fff', // Add background color to replicate card look
+    marginHorizontal: 5,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5, // For Android shadow
+    shadowRadius: 3,
   },
   dayContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 10,
+  },
+  dayText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  tempText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  weatherDesc: {
+    fontSize: 14,
+    color: '#555',
   },
   weatherIcon: {
     width: 50,
     height: 50,
-  },
-  dayText: {
-    fontSize: 16,
-    flex: 1,
-  },
-  tempText: {
-    fontSize: 16,
-    flex: 1,
-    textAlign: 'right',
+    marginBottom: 5,
   },
 });
 
