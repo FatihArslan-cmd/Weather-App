@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, Alert, Modal, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Alert, Modal, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import axios from 'axios';
@@ -67,19 +67,34 @@ const App = () => {
     }
   };
   const handleCitySelect = async (city) => {
-    if (city.countryCode) {
-      const { name, countryCode } = city;
-      // Use the city name to fetch coordinates using an API
-      // For simplicity, let's assume you have a utility to get coordinates by city name.
-      const { lat, lon } = await getCoordinatesByCityName(name);
-      await fetchWeatherByLocation(lat, lon);
-      await fetchHourlyWeather(lat, lon);
-    } else {
+    setLoading(true); // Show loading while fetching data
+    if (city.isCurrentLocation) {
       // Current location was selected
       await fetchWeatherByLocation(location.latitude, location.longitude);
       await fetchHourlyWeather(location.latitude, location.longitude);
+    } else {
+      try {
+        const response = await axios.get(
+          `https://api.openweathermap.org/data/2.5/weather?q=${city.name}&appid=${API_KEY}&units=metric`
+        );
+        setWeather(response.data);
+  
+        // Fetch hourly weather for the selected city
+        const hourlyResponse = await axios.get(
+          `https://api.openweathermap.org/data/2.5/forecast?q=${city.name}&appid=${API_KEY}&units=metric`
+        );
+        setHourlyWeather(hourlyResponse.data.list.slice(0, 10));
+        
+        setError('');
+      } catch (err) {
+        setError('Hava durumu bilgisi alınamadı.');
+        setWeather(null);
+        setHourlyWeather([]);
+      }
     }
+    setLoading(false); // Hide loading after fetching data
   };
+  
   const fetchHourlyWeather = async (lat, lon) => {
     try {
       const response = await axios.get(
@@ -119,7 +134,11 @@ const App = () => {
         visible={loading}
       >
         <View style={styles.loadingOverlay}>
-          <Wave size={48} color="#02CCFE" />
+        <Image
+      source={require('./assets/icon.png')}
+      style={{ width: 200, height: 200 }}
+    />
+          <Wave size={48} color="#f5b406" />
         </View>
       </Modal>
     </SafeAreaView>
@@ -140,7 +159,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: '#e9e6d9',
   },
 });
 

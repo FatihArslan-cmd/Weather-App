@@ -60,8 +60,15 @@ const famousCities = [
 
 const LocationCard = ({ address, onSelectCity }) => {
   const [modalVisible, setModalVisible] = useState(false);
+  const [selectedCity, setSelectedCity] = useState({ name: address, countryCode: null });
 
   const handleCitySelect = (city) => {
+    if (city.isCurrentLocation) {
+      // Use the current address for the current location
+      setSelectedCity({ name: address, countryCode: null });
+    } else {
+      setSelectedCity(city);
+    }
     onSelectCity(city);
     setModalVisible(false);
   };
@@ -71,7 +78,10 @@ const LocationCard = ({ address, onSelectCity }) => {
       <TouchableOpacity onPress={() => setModalVisible(true)}>
         <Card style={styles.locationCard}>
           <Card.Content style={styles.locationInfo}>
-            <CustomText fontFamily="pop" style={styles.cityText}>{address}</CustomText>
+            {selectedCity.countryCode && (
+              <CountryFlag isoCode={selectedCity.countryCode} size={25} style={styles.flag} />
+            )}
+            <CustomText fontFamily="pop" style={styles.cityText}>{selectedCity.name}</CustomText>
           </Card.Content>
         </Card>
       </TouchableOpacity>
@@ -87,7 +97,7 @@ const LocationCard = ({ address, onSelectCity }) => {
             <TouchableWithoutFeedback>
               <View style={styles.modalContainer}>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Select a Popular City</Text>
+                  <CustomText fontFamily="pop" style={styles.modalTitle}>Select a Popular City</CustomText>
                   <TouchableOpacity onPress={() => setModalVisible(false)}>
                     <Icon name="close" size={24} color="#000" />
                   </TouchableOpacity>
@@ -131,10 +141,15 @@ const styles = StyleSheet.create({
   cityText: {
     fontSize: 18,
     textAlign: 'center',
+    marginLeft: 10, // Added margin for spacing between flag and text
   },
   locationInfo: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  flag: {
+    marginRight: 10, // Optional: add spacing between flag and city name
   },
   modalOverlay: {
     flex: 1,
@@ -157,7 +172,6 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
   },
   cityItem: {
     flexDirection: 'row',
