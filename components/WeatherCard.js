@@ -1,26 +1,25 @@
-import {React,useState,useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Text } from 'react-native-paper';
-import { View, StyleSheet, Image, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import WeatherDetails from './WeatherDetails';
 import WeatherDescription from './WeatherDescription';
 import CustomText from './CustomText';
 import updateDateTime from '../utils/updateDateTime';
 
-const WeatherCard = ({ weather, loading, error }) => {
+const WeatherCard = ({ weather, error }) => {
   const [dateTime, setDateTime] = useState('');
+  
   useEffect(() => {
     updateDateTime(setDateTime); // Set the date and time immediately
-    const interval = setInterval(() => updateDateTime(setDateTime), 60000); // Continue updating every minute
+    const interval = setInterval(() => updateDateTime(setDateTime), 60000); // Update every minute
     return () => clearInterval(interval);
   }, []);
-  
+
   return (
     <Card style={styles.card}>
       <Card.Title title={dateTime} titleStyle={styles.cardTitle} />
       <Card.Content>
-        {loading ? (
-          <ActivityIndicator animating={true} style={styles.loadingIndicator} />
-        ) : weather ? (
+        {weather ? (
           <View>
             <View style={styles.weatherContainer}>
               <Image
@@ -68,7 +67,7 @@ const styles = StyleSheet.create({
   },
   weatherIcon: {
     width: 100,
-    height: 100, // Adjust if needed
+    height: 100,
   },
   MaintempText: {
     fontSize: 30,

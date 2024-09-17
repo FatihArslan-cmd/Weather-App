@@ -14,13 +14,14 @@ import AirQualityScreen from './components/AirQuality';
 
 const App = () => {
   const [weather, setWeather] = useState(null);
-  const [airQuality, setAirQuality] = useState(null);  // New state for air quality
+  const [airQuality, setAirQuality] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [location, setLocation] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [hourlyWeather, setHourlyWeather] = useState([]);
   const [address, setAddress] = useState('');
+  const [selectedCity, setSelectedCity] = useState(null); // Track the selected city
 
   useEffect(() => {
     getLocationAsync();
@@ -48,7 +49,7 @@ const App = () => {
 
     await fetchWeatherByLocation(location.coords.latitude, location.coords.longitude);
     await fetchHourlyWeather(location.coords.latitude, location.coords.longitude);
-    await fetchAirQuality(location.coords.latitude, location.coords.longitude); // Fetch air quality
+    await fetchAirQuality(location.coords.latitude, location.coords.longitude); 
     setLoading(false);
   };
 
@@ -97,6 +98,7 @@ const App = () => {
 
   const handleCitySelect = async (city) => {
     setLoading(true);
+    setSelectedCity(city); // Save the selected city
     if (city.isCurrentLocation) {
       await fetchWeatherByLocation(location.latitude, location.longitude);
       await fetchHourlyWeather(location.latitude, location.longitude);
@@ -125,13 +127,17 @@ const App = () => {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    if (location) {
-      fetchWeatherByLocation(location.latitude, location.longitude);
-      fetchHourlyWeather(location.latitude, location.longitude);
-      fetchAirQuality(location.latitude, location.longitude);
+    if (selectedCity) {
+      if (selectedCity.isCurrentLocation) {
+        fetchWeatherByLocation(location.latitude, location.longitude);
+        fetchHourlyWeather(location.latitude, location.longitude);
+        fetchAirQuality(location.latitude, location.longitude);
+      } else {
+        handleCitySelect(selectedCity); // Re-fetch data for the selected city
+      }
     }
     setRefreshing(false);
-  }, [location]);
+  }, [selectedCity, location]);
 
   return (
     <SafeAreaView style={styles.container}>
