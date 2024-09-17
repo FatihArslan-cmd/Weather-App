@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, Alert, Modal, Image } from 'react-native';
+import { View, StyleSheet, Alert, Modal, Image,StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import axios from 'axios';
@@ -125,6 +125,11 @@ const App = () => {
           <LocationCard address={address} onSelectCity={handleCitySelect} />
           <WeatherCard dateTime={dateTime} weather={weather} loading={loading} error={error} />
           <HourlyWeatherCard hourlyWeather={hourlyWeather} />
+          <StatusBar
+        backgroundColor="#87CEEB"
+        barStyle="light-content"
+        translucent   
+      />
         </RefreshScrollView>
       </LinearGradient>
 
@@ -139,6 +144,11 @@ const App = () => {
       style={{ width: 200, height: 200 }}
     />
           <Wave size={48} color="#f5b406" />
+          <StatusBar
+        backgroundColor="#e9e6d9"
+        barStyle="light-content"
+        translucent   
+      />
         </View>
       </Modal>
     </SafeAreaView>

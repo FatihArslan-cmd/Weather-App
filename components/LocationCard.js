@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList, TouchableWithoutFeedback } from 'react-native';
 import { Card } from 'react-native-paper';
 import CustomText from './CustomText';
@@ -61,6 +61,12 @@ const famousCities = [
 const LocationCard = ({ address, onSelectCity }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedCity, setSelectedCity] = useState({ name: address, countryCode: null });
+
+  useEffect(() => {
+    if (address) {
+      setSelectedCity({ name: address, countryCode: null });
+    }
+  }, [address]);
 
   const handleCitySelect = (city) => {
     if (city.isCurrentLocation) {
