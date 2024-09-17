@@ -8,24 +8,20 @@ import RefreshScrollView from './components/RefreshScrollView';
 import WeatherCard from './components/WeatherCard';
 import HourlyWeatherCard from './components/HourlyWeatherCard';
 import LocationCard from './components/LocationCard';
-import updateDateTime from './utils/updateDateTime';
-import { Wave } from 'react-native-animated-spinkit';
+import { Fold } from 'react-native-animated-spinkit';
 import API_KEY from './API_KEY';
-
+import SunriseSunsetCard from './components/SunriseSunsetCard';
 const App = () => {
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(true); // Set initial loading state to true
   const [error, setError] = useState('');
   const [location, setLocation] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [dateTime, setDateTime] = useState('');
   const [hourlyWeather, setHourlyWeather] = useState([]);
   const [address, setAddress] = useState('');
 
   useEffect(() => {
-    getLocationAsync();
-    const interval = setInterval(() => updateDateTime(setDateTime), 60000);
-    return () => clearInterval(interval);
+    getLocationAsync();;
   }, []);
 
   const getLocationAsync = async () => {
@@ -59,13 +55,24 @@ const App = () => {
       const response = await axios.get(
         `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
       );
-      setWeather(response.data);
+      
+      const weatherData = response.data;
+      const sunrise = new Date(weatherData.sys.sunrise * 1000).toLocaleTimeString(); // Convert UNIX timestamp to readable time
+      const sunset = new Date(weatherData.sys.sunset * 1000).toLocaleTimeString(); // Convert UNIX timestamp to readable time
+  
+      setWeather({
+        ...weatherData,
+        sunrise,
+        sunset,
+      });
+      
       setError('');
     } catch (err) {
       setError('Hava durumu bilgisi alınamadı.');
       setWeather(null);
     }
   };
+  
   const handleCitySelect = async (city) => {
     setLoading(true); // Show loading while fetching data
     if (city.isCurrentLocation) {
@@ -121,9 +128,10 @@ const App = () => {
         colors={['#87CEEB', '#00BFFF']}
         style={styles.gradient}
       >
+
         <RefreshScrollView refreshing={refreshing} onRefresh={onRefresh}>
           <LocationCard address={address} onSelectCity={handleCitySelect} />
-          <WeatherCard dateTime={dateTime} weather={weather} loading={loading} error={error} />
+          <WeatherCard  weather={weather} loading={loading} error={error} />
           <HourlyWeatherCard hourlyWeather={hourlyWeather} />
           <StatusBar
         backgroundColor="#87CEEB"
@@ -143,7 +151,7 @@ const App = () => {
       source={require('./assets/icon.png')}
       style={{ width: 200, height: 200 }}
     />
-          <Wave size={48} color="#f5b406" />
+          <Fold size={48} color="#f5b406" />
           <StatusBar
         backgroundColor="#e9e6d9"
         barStyle="light-content"

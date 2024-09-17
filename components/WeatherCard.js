@@ -1,12 +1,19 @@
-// WeatherCard.js
-import React from 'react';
+import {React,useState,useEffect} from 'react';
 import { Card, Text } from 'react-native-paper';
 import { View, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import WeatherDetails from './WeatherDetails';
 import WeatherDescription from './WeatherDescription';
 import CustomText from './CustomText';
+import updateDateTime from '../utils/updateDateTime';
 
-const WeatherCard = ({ dateTime, weather, loading, error }) => {
+const WeatherCard = ({ weather, loading, error }) => {
+  const [dateTime, setDateTime] = useState('');
+  useEffect(() => {
+    updateDateTime(setDateTime); // Set the date and time immediately
+    const interval = setInterval(() => updateDateTime(setDateTime), 60000); // Continue updating every minute
+    return () => clearInterval(interval);
+  }, []);
+  
   return (
     <Card style={styles.card}>
       <Card.Title title={dateTime} titleStyle={styles.cardTitle} />
