@@ -27,7 +27,9 @@ import SunriseSunsetCard from './components/SunriseSunsetCard';
 import DewPointCard from './components/DewPointCard';
 import { WeatherProvider } from './context/WeatherContext';
 import MoonPhaseCard from './components/MoonPhaseCard';
+import SocialShareBar from './components/SocialShareBar';
 import MapComponent from './components/MapComponent';
+import Footer from './components/Footer';
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
 const App = () => {
@@ -296,6 +298,8 @@ const App = () => {
 />
           <DewPointCard visibility={weather?.visibility}/>
           <MapComponent location={location}/>
+          <SocialShareBar/>
+          <Footer/>
           <StatusBar backgroundColor="#87CEEB" barStyle="light-content" translucent />
         </ScrollView>
       </LinearGradient>

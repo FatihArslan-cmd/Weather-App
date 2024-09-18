@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
-import * as Location from 'expo-location';
-
+import MapView, { Marker, UrlTile } from 'react-native-maps';
+import { Card } from 'react-native-paper';
+import CustomText from './CustomText';
+import API_KEY from '../API_KEY';
 const MapComponent = ({ location }) => {
   const [region, setRegion] = useState(null);
+
+  // Replace with your actual OpenWeather API key
+
 
   useEffect(() => {
     if (location) {
@@ -22,48 +26,47 @@ const MapComponent = ({ location }) => {
   }
 
   return (
-    <View style={styles.mapContainer}>
-      <MapView
-        style={styles.map}
-        region={region}
-        showsUserLocation={true}
-        followUserLocation={true}
-        zoomEnabled={true}
-      >
-        <Marker coordinate={region} title="Your Location" />
-      </MapView>
-    </View>
+    <Card style={styles.cardContainer}>
+      <CustomText fontFamily="pop" style={styles.title}>Uydular</CustomText>
+      <Card.Content>
+        <MapView
+          style={styles.map}
+          region={region}
+          showsUserLocation={true}
+          followUserLocation={true}
+          zoomEnabled={true}
+        >
+          {/* Marker for user location */}
+          <Marker coordinate={region} title="Your Location" />
+
+          {/* Weather map tile overlay from OpenWeather */}
+          <UrlTile
+            urlTemplate={`https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${API_KEY}`}
+            zIndex={1}
+            tileSize={256}
+          />
+        </MapView>
+      </Card.Content>
+    </Card>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  cardContainer: {
+    marginVertical: 10,
+    elevation: 3, // Shadow for Android
+    shadowColor: '#000', // Shadow for iOS
+    shadowOffset: { width: 0, height: 2 }, // Shadow offset for iOS
+    shadowOpacity: 0.2, // Shadow opacity for iOS
+    shadowRadius: 3, // Shadow radius for iOS
   },
-  mapContainer: {
-    borderWidth: 2,  // Set the width of the border
-    borderColor: 'gray',  // Set the color of the border
-    borderRadius: 10,  // Optional: Rounded corners for the border
-    overflow: 'hidden',  // Ensure the map does not overflow the border
+  title: {
+    fontSize: 18,
+    textAlign: 'center',
   },
   map: {
-    width: Dimensions.get('window').width,
+    width: Dimensions.get('window').width - 20, // Adjust width to fit card
     height: Dimensions.get('window').height * 0.4, // Half the screen height
-  },
-  gradient: {
-    flex: 1,
-  },
-  locationCardContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  scrollContainer: {
-    paddingTop: 120, // Adjust this value based on your layout
   },
 });
 

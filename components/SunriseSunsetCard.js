@@ -1,10 +1,14 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, Image, TouchableOpacity, Animated } from 'react-native';
 import { Card } from 'react-native-paper';
 import CustomText from './CustomText';
 import { MaterialIcons } from '@expo/vector-icons'; // Simge için MaterialIcons kütüphanesini kullanabilirsiniz.
 
 const formatTo24Hour = (time) => {
+  if (!time || typeof time !== 'string' || !time.includes(':')) {
+    return 'Invalid time'; // or handle error as needed
+  }
+
   const [hour, minute] = time.split(':');
   const period = time.includes('AM') || time.includes('PM') ? time.slice(-2) : null;
 
@@ -20,28 +24,63 @@ const formatTo24Hour = (time) => {
   return `${formattedHour < 10 ? '0' + formattedHour : formattedHour}:${minute.slice(0, 2)}`;
 };
 
+// Zaman farkını dakika cinsinden hesapla
+const getTimeDifference = (startTime, endTime) => {
+  const [startHour, startMinute] = startTime.split(':').map(Number);
+  const [endHour, endMinute] = endTime.split(':').map(Number);
+
+  const startTotalMinutes = startHour * 60 + startMinute;
+  const endTotalMinutes = endHour * 60 + endMinute;
+
+  return endTotalMinutes - startTotalMinutes;
+};
+
 const SunriseSunsetCard = ({ sunrise, sunset }) => {
   const [is24Hour, setIs24Hour] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
+  const [dayLength, setDayLength] = useState(null);
+  const [remainingDaylight, setRemainingDaylight] = useState(null);
 
   const toggleTimeFormat = () => {
-    // Önce fade-out yapıyoruz
     Animated.timing(fadeAnim, {
-      toValue: 0, // Saydamlık sıfıra düşer
-      duration: 300, // 300ms sürede
+      toValue: 0,
+      duration: 300,
       useNativeDriver: true,
     }).start(() => {
-      // Saat formatını değiştiriyoruz
       setIs24Hour(!is24Hour);
-
-      // Sonra fade-in yapıyoruz
       Animated.timing(fadeAnim, {
-        toValue: 1, // Saydamlık tekrar 1'e çıkar
-        duration: 300, // 300ms sürede
+        toValue: 1,
+        duration: 300,
         useNativeDriver: true,
       }).start();
     });
   };
+
+  useEffect(() => {
+    if (sunrise && sunset) {
+      const sunrise24 = formatTo24Hour(sunrise); // 12 saat formatı da olsa 24 saate çevir
+      const sunset24 = formatTo24Hour(sunset); // 12 saat formatı da olsa 24 saate çevir
+
+      // Gün uzunluğunu hesapla
+      const totalDaylightMinutes = getTimeDifference(sunrise24, sunset24);
+      const hours = Math.floor(totalDaylightMinutes / 60);
+      const minutes = totalDaylightMinutes % 60;
+      setDayLength(`${hours}h ${minutes}m`);
+
+      // Kalan gün ışığını hesapla
+      const now = new Date();
+      const currentTime = `${now.getHours()}:${now.getMinutes()}`;
+      const remainingMinutes = getTimeDifference(currentTime, sunset24);
+
+      if (remainingMinutes > 0) {
+        const remHours = Math.floor(remainingMinutes / 60);
+        const remMinutes = remainingMinutes % 60;
+        setRemainingDaylight(`${remHours}h ${remMinutes}m`);
+      } else {
+        setRemainingDaylight('It is night');
+      }
+    }
+  }, [sunrise, sunset, is24Hour]);
 
   return (
     <Card style={styles.card}>
@@ -63,6 +102,20 @@ const SunriseSunsetCard = ({ sunrise, sunset }) => {
               <Image source={require('../assets/sunset.png')} style={styles.icon} />
               <CustomText fontFamily="pop" style={styles.dataText}>
                 Sunset: {is24Hour && sunset ? formatTo24Hour(sunset) : sunset || 'N/A'}
+              </CustomText>
+            </View>
+
+            {/* Gün uzunluğu */}
+            <View style={styles.blockContainer}>
+              <CustomText fontFamily="pop" style={styles.dataText}>
+                Day Length: {dayLength || 'N/A'}
+              </CustomText>
+            </View>
+
+            {/* Kalan gün ışığı */}
+            <View style={styles.blockContainer}>
+              <CustomText fontFamily="pop" style={styles.dataText}>
+                Remaining Daylight: {remainingDaylight || 'N/A'}
               </CustomText>
             </View>
           </Animated.View>
