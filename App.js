@@ -53,7 +53,7 @@ const App = () => {
 
   const handleCitySelect = async (city) => {
     setLoading(true);
-    setSelectedCity(city); // Save the selected city
+    setSelectedCity(city);
   
     try {
       if (city.isCurrentLocation) {
@@ -67,6 +67,10 @@ const App = () => {
         );
         const weatherData = response.data;
         
+        // Update location state with selected city's coordinates
+        const { lat, lon } = weatherData.coord;
+        setLocation({ latitude: lat, longitude: lon });
+  
         setWeather(weatherData);
         setSunData({
           sunrise: readTimeStamp(weatherData.sys.sunrise, weatherData.timezone),
@@ -75,8 +79,8 @@ const App = () => {
   
         const [hourlyResponse, airQualityResponse, uvIndexResponse] = await Promise.all([
           axios.get(`https://api.openweathermap.org/data/2.5/forecast?q=${city.name}&appid=${API_KEY}&units=metric`),
-          axios.get(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${weatherData.coord.lat}&lon=${weatherData.coord.lon}&appid=${API_KEY}`),
-          axios.get(`https://api.openweathermap.org/data/2.5/uvi?lat=${weatherData.coord.lat}&lon=${weatherData.coord.lon}&appid=${API_KEY}`)
+          axios.get(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`),
+          axios.get(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${API_KEY}`)
         ]);
   
         setHourlyWeather(hourlyResponse.data.list.slice(0, 10));
