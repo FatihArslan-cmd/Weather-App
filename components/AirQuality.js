@@ -25,7 +25,6 @@ const AirQualityScreen = ({ airQuality }) => {
 
   return (
     <Card style={styles.card}>
-      {/* Replacing Card.Title with CustomText */}
       <View style={styles.titleContainer}>
         <CustomText fontFamily="pop" style={styles.cardTitle}>
           Air Quality

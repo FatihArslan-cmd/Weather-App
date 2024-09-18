@@ -64,6 +64,7 @@ const HourlyWeatherCard = ({ hourlyWeather }) => {
 const styles = StyleSheet.create({
   containerCard: {
     borderRadius: 10,
+    margin:5
   },
   hourlyWeatherContainer: {
     flexDirection: 'row',

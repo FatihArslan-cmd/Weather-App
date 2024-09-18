@@ -23,7 +23,7 @@ import { Fold } from 'react-native-animated-spinkit';
 import API_KEY from './API_KEY';
 import AirQualityScreen from './components/AirQuality';
 import UVIndexScreen from './components/UVIndexScreen';
-
+import SunriseSunsetCard from './components/SunriseSunsetCard';
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
 const App = () => {
@@ -37,6 +37,7 @@ const App = () => {
   const [address, setAddress] = useState('');
   const [selectedCity, setSelectedCity] = useState(null);
   const [uvIndex, setUVIndex] = useState(null);
+  const [sunData, setSunData] = useState({ sunrise: null, sunset: null });
 
   // Animated value for scroll position
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -48,48 +49,49 @@ const App = () => {
   const handleCitySelect = async (city) => {
     setLoading(true);
     setSelectedCity(city); // Save the selected city
-
-    if (city.isCurrentLocation) {
-      // Mevcut konum
-      await fetchWeatherByLocation(location.latitude, location.longitude);
-      await fetchHourlyWeather(location.latitude, location.longitude);
-      await fetchAirQuality(location.latitude, location.longitude);
-      await fetchUVIndex(location.latitude, location.longitude); // UV Endeksi
-    } else {
-      // Şehir ismiyle hava durumu
-      try {
+  
+    try {
+      if (city.isCurrentLocation) {
+        await fetchWeatherByLocation(location.latitude, location.longitude);
+        await fetchHourlyWeather(location.latitude, location.longitude);
+        await fetchAirQuality(location.latitude, location.longitude);
+        await fetchUVIndex(location.latitude, location.longitude);
+      } else {
         const response = await axios.get(
           `https://api.openweathermap.org/data/2.5/weather?q=${city.name}&appid=${API_KEY}&units=metric`
         );
-        setWeather(response.data);
-
-        const hourlyResponse = await axios.get(
-          `https://api.openweathermap.org/data/2.5/forecast?q=${city.name}&appid=${API_KEY}&units=metric`
-        );
+        const weatherData = response.data;
+        
+        setWeather(weatherData);
+        setSunData({
+          sunrise: readTimeStamp(weatherData.sys.sunrise, weatherData.timezone),
+          sunset: readTimeStamp(weatherData.sys.sunset, weatherData.timezone),
+        });
+  
+        const [hourlyResponse, airQualityResponse, uvIndexResponse] = await Promise.all([
+          axios.get(`https://api.openweathermap.org/data/2.5/forecast?q=${city.name}&appid=${API_KEY}&units=metric`),
+          axios.get(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${weatherData.coord.lat}&lon=${weatherData.coord.lon}&appid=${API_KEY}`),
+          axios.get(`https://api.openweathermap.org/data/2.5/uvi?lat=${weatherData.coord.lat}&lon=${weatherData.coord.lon}&appid=${API_KEY}`)
+        ]);
+  
         setHourlyWeather(hourlyResponse.data.list.slice(0, 10));
-
-        const airQualityResponse = await axios.get(
-          `https://api.openweathermap.org/data/2.5/air_pollution?lat=${response.data.coord.lat}&lon=${response.data.coord.lon}&appid=${API_KEY}`
-        );
         setAirQuality(airQualityResponse.data);
-
-        // UV Endeksi
-        const uvIndexResponse = await axios.get(
-          `https://api.openweathermap.org/data/2.5/uvi?lat=${response.data.coord.lat}&lon=${response.data.coord.lon}&appid=${API_KEY}`
-        );
         setUVIndex(uvIndexResponse.data.value);
-
+  
         setError('');
-      } catch (err) {
-        setError('Hava durumu bilgisi alınamadı.');
-        setWeather(null);
-        setHourlyWeather([]);
-        setAirQuality(null); // Hata durumunda hava kalitesini sıfırla
-        setUVIndex(null); // Hata durumunda UV endeksini sıfırla
       }
+    } catch (err) {
+      setError('Hava durumu bilgisi alınamadı.');
+      setWeather(null);
+      setHourlyWeather([]);
+      setAirQuality(null);
+      setUVIndex(null);
+      setSunData({ sunrise: null, sunset: null });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
+  
 
   const getLocationAsync = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -120,6 +122,7 @@ const App = () => {
         setHourlyWeather(data.hourlyWeather);
         setAirQuality(data.airQuality);
         setUVIndex(data.uvIndex);
+        setSunData(data.sunData); // Set cached sunrise/sunset data
         setLoading(false);
         return;
       }
@@ -134,6 +137,7 @@ const App = () => {
       const hourlyData = await fetchHourlyWeather(lat, lon);
       const airQualityData = await fetchAirQuality(lat, lon);
       const uvIndexData = await fetchUVIndex(lat, lon);
+      const sunData = await fetchSunriseSunset(lat, lon); // Fetch sunrise/sunset data
 
       // Cache data
       const dataToCache = {
@@ -141,6 +145,8 @@ const App = () => {
         hourlyWeather: hourlyData,
         airQuality: airQualityData,
         uvIndex: uvIndexData,
+        sunData: sunData, // Cache sunrise/sunset data
+
       };
       await AsyncStorage.setItem('weatherData', JSON.stringify({ data: dataToCache, timestamp: Date.now() }));
 
@@ -148,6 +154,7 @@ const App = () => {
       setHourlyWeather(hourlyData);
       setAirQuality(airQualityData);
       setUVIndex(uvIndexData);
+      setSunData(sunData); // Set sunrise/sunset data
     } catch (error) {
       setError('Data could not be fetched.');
       console.log('Error fetching weather data:', error);
@@ -157,14 +164,26 @@ const App = () => {
   };
 
   const fetchWeatherByLocation = async (lat, lon) => {
-    const response = await axios.get(
-      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
-    );
-    return {
-      ...response.data,
-      sunrise: new Date(response.data.sys.sunrise * 1000).toLocaleTimeString(),
-      sunset: new Date(response.data.sys.sunset * 1000).toLocaleTimeString(),
-    };
+    try {
+      const response = await axios.get(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
+      );
+      const weatherData = response.data;
+      
+      // Güneş doğuşu ve batışı zamanlarını hesapla
+      const sunData = {
+        sunrise: readTimeStamp(weatherData.sys.sunrise, weatherData.timezone),
+        sunset: readTimeStamp(weatherData.sys.sunset, weatherData.timezone),
+      };
+  
+      // Güneş verilerini set et
+      setSunData(sunData);
+      
+      return weatherData;
+    } catch (error) {
+      console.error("Error fetching weather by location:", error);
+      return null;
+    }
   };
 
   const fetchHourlyWeather = async (lat, lon) => {
@@ -180,7 +199,27 @@ const App = () => {
     );
     return response.data;
   };
-
+  const fetchSunriseSunset = async (lat, lon) => {
+    try {
+      const response = await axios.get(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
+      );
+      const { sunrise, sunset, timezone } = response.data.sys;
+      return {
+        sunrise: readTimeStamp(sunrise, timezone),
+        sunset: readTimeStamp(sunset, timezone),
+      };
+    } catch (error) {
+      console.error('Error fetching sunrise/sunset data:', error);
+      return { sunrise: null, sunset: null };
+    }
+  };
+  const readTimeStamp = (unixTimestamp, timezoneOffset) => {
+    const clientOffset = new Date().getTimezoneOffset();
+    const offsetTimestamp = unixTimestamp + clientOffset * 60 + timezoneOffset;
+    const date = new Date(offsetTimestamp * 1000);
+    return date.toLocaleTimeString();
+  };
   const fetchUVIndex = async (lat, lon) => {
     const response = await axios.get(
       `https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${API_KEY}`
@@ -214,6 +253,7 @@ const App = () => {
           <HourlyWeatherCard hourlyWeather={hourlyWeather} />
           <AirQualityScreen airQuality={airQuality} />
           <UVIndexScreen uvIndex={uvIndex} />
+          <SunriseSunsetCard sunrise={sunData.sunrise} sunset={sunData.sunset} />
           <StatusBar backgroundColor="#87CEEB" barStyle="light-content" translucent />
         </ScrollView>
       </LinearGradient>

@@ -1,26 +1,24 @@
-// SunriseSunsetCard.js
 import React from 'react';
-import { Card, Text } from 'react-native-paper';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet,Image } from 'react-native';
+import { Card } from 'react-native-paper';
 import CustomText from './CustomText';
 
 const SunriseSunsetCard = ({ sunrise, sunset }) => {
   return (
     <Card style={styles.card}>
-      <Card.Title title="Gün Doğumu ve Batımı" titleStyle={styles.cardTitle} />
       <Card.Content>
-        <View style={styles.timeContainer}>
-          <View style={styles.timeItem}>
-            <CustomText fontFamily="pop" style={styles.timeText}>
-              Gün Doğumu:
-            </CustomText>
-            <Text style={styles.timeValue}>{sunrise}</Text>
+        <View style={styles.infoContainer}>
+          <View style={styles.blockContainer}>
+        <Image source={require('../assets/sunrise.png')} style={styles.icon} />
+          <CustomText fontFamily="pop" style={styles.dataText}>
+            Sunrise: {sunrise || 'N/A'}
+          </CustomText>
           </View>
-          <View style={styles.timeItem}>
-            <CustomText fontFamily="pop" style={styles.timeText}>
-              Gün Batımı:
-            </CustomText>
-            <Text style={styles.timeValue}>{sunset}</Text>
+          <View style={styles.blockContainer}>
+          <Image source={require('../assets/sunset.png')} style={styles.icon} />
+          <CustomText fontFamily="pop" style={styles.dataText}>
+            Sunset: {sunset || 'N/A'}
+          </CustomText>
           </View>
         </View>
       </Card.Content>
@@ -32,32 +30,27 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     borderRadius: 10,
-    padding: 10,
     shadowColor: '#000',
     shadowOpacity: 0.5,
     shadowRadius: 5,
-    marginBottom: 10,
+    marginVertical: 5,
   },
-  cardTitle: {
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: 'bold',
+  blockContainer:{
+   flexDirection:'row',
+   marginVertical:5
   },
-  timeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 10,
-  },
-  timeItem: {
+  infoContainer: {
     alignItems: 'center',
   },
-  timeText: {
-    fontSize: 16,
-    marginBottom: 5,
+  icon:{
+   width:50,
+   height:50,
+   marginHorizontal:5
   },
-  timeValue: {
+  dataText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop:10
   },
 });
 
