@@ -24,6 +24,8 @@ import API_KEY from './API_KEY';
 import AirQualityScreen from './components/AirQuality';
 import UVIndexScreen from './components/UVIndexScreen';
 import SunriseSunsetCard from './components/SunriseSunsetCard';
+import DewPointCard from './components/DewPointCard';
+import { WeatherProvider } from './context/WeatherContext';
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
 const App = () => {
@@ -236,6 +238,7 @@ const App = () => {
   }, [selectedCity, location]);
 
   return (
+    <WeatherProvider>
     <SafeAreaView style={styles.container}>
       <LinearGradient colors={['#87CEEB', '#00BFFF']} style={styles.gradient}>
         <View style={styles.locationCardContainer}>
@@ -254,6 +257,7 @@ const App = () => {
           <AirQualityScreen airQuality={airQuality} />
           <UVIndexScreen uvIndex={uvIndex} />
           <SunriseSunsetCard sunrise={sunData.sunrise} sunset={sunData.sunset} />
+          <DewPointCard/>
           <StatusBar backgroundColor="#87CEEB" barStyle="light-content" translucent />
         </ScrollView>
       </LinearGradient>
@@ -265,7 +269,7 @@ const App = () => {
           <StatusBar backgroundColor="#e9e6d9" barStyle="light-content" translucent />
         </View>
       </Modal>
-    </SafeAreaView>
+    </SafeAreaView></WeatherProvider>
   );
 };
 

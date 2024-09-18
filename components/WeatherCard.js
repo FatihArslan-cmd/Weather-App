@@ -5,15 +5,26 @@ import WeatherDetails from './WeatherDetails';
 import WeatherDescription from './WeatherDescription';
 import CustomText from './CustomText';
 import updateDateTime from '../utils/updateDateTime';
+import { useWeather } from '../context/WeatherContext';
 
 const WeatherCard = ({ weather, error }) => {
   const [dateTime, setDateTime] = useState('');
-  
+  const { setTemperature, setHumidity } = useWeather(); // Context'ten setter'ları al
+
   useEffect(() => {
     updateDateTime(setDateTime); // Set the date and time immediately
     const interval = setInterval(() => updateDateTime(setDateTime), 60000); // Update every minute
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (weather) {
+      const temperature = weather.main.temp; // Sıcaklık (°C)
+      const humidity = weather.main.humidity; // Bağıl nem oranı (%)
+      setTemperature(temperature); // Sıcaklığı context'e kaydet
+      setHumidity(humidity); // Nem oranını context'e kaydet
+    }
+  }, [weather]);
 
   return (
     <Card style={styles.card}>
