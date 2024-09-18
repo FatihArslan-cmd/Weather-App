@@ -1,19 +1,20 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Card } from 'react-native-paper';
+import { LinearGradient } from 'expo-linear-gradient'; 
 import CustomText from './CustomText';
 
 const getUVIndexDetails = (uvIndex) => {
   if (uvIndex <= 2) {
-    return { text: 'Düşük', color: '#00C853', recommendation: 'Güneş koruyucu kullanmanıza gerek yok.' };
+    return { text: 'Düşük', color: '#00C853', recommendation: 'Güneş koruyucu kullanmanıza gerek yok.', percentage: (uvIndex / 11) * 100 };
   } else if (uvIndex <= 5) {
-    return { text: 'Orta', color: '#FFEB3B', recommendation: 'Güneş koruyucu kullanmanız tavsiye edilir.' };
+    return { text: 'Orta', color: '#FFEB3B', recommendation: 'Güneş koruyucu kullanmanız tavsiye edilir.', percentage: (uvIndex / 11) * 100 };
   } else if (uvIndex <= 7) {
-    return { text: 'Yüksek', color: '#FF9800', recommendation: 'Güneş koruyucu kullanın ve gölgede kalın.' };
+    return { text: 'Yüksek', color: '#FF9800', recommendation: 'Güneş koruyucu kullanın ve gölgede kalın.', percentage: (uvIndex / 11) * 100 };
   } else if (uvIndex <= 10) {
-    return { text: 'Çok Yüksek', color: '#F44336', recommendation: 'Güneş koruyucu kullanın, mümkünse dışarı çıkmayın.' };
+    return { text: 'Çok Yüksek', color: '#F44336', recommendation: 'Güneş koruyucu kullanın, mümkünse dışarı çıkmayın.', percentage: (uvIndex / 11) * 100 };
   } else {
-    return { text: 'Aşırı Yüksek', color: '#D32F2F', recommendation: 'Dışarı çıkmaktan kaçının ve koruyucu önlemler alın.' };
+    return { text: 'Aşırı Yüksek', color: '#D32F2F', recommendation: 'Dışarı çıkmaktan kaçının ve koruyucu önlemler alın.', percentage: (uvIndex / 11) * 100 };
   }
 };
 
@@ -38,6 +39,21 @@ const UVIndexScreen = ({ uvIndex }) => {
                 </CustomText>
               </View>
             </View>
+
+            {/* UV Index Gradient Bar */}
+            <LinearGradient
+              colors={['#00C853', '#FFEB3B', '#FF9800', '#F44336', '#D32F2F']}
+              style={styles.gradientBar}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <View
+                style={[
+                  styles.indicator,
+                  { left: `${uvIndexDetails.percentage}%` }, // Indicator position based on UV index level
+                ]}
+              />
+            </LinearGradient>
           </View>
         ) : (
           <Text style={styles.dataText}>UV endeksi verisi yok.</Text>
@@ -69,11 +85,27 @@ const styles = StyleSheet.create({
   },
   dataText: {
     fontSize: 16,
-    textAlign:'center'
+    textAlign: 'center',
   },
   recommendationText: {
     fontSize: 16,
     marginTop: 10,
+  },
+  gradientBar: {
+    height: 10,
+    borderRadius: 5,
+    marginTop: 10,
+    position: 'relative',
+  },
+  indicator: {
+    position: 'absolute',
+    top: -5,
+    width: 10,
+    height: 10,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#000',
   },
 });
 

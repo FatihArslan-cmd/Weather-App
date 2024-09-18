@@ -2,21 +2,23 @@ import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { Card } from 'react-native-paper';
 import CustomText from './CustomText';
+import { LinearGradient } from 'expo-linear-gradient';
 
+// Helper function to get air quality details based on AQI value
 const getAirQualityDetails = (aqi) => {
   switch (aqi) {
     case 1:
-      return { text: 'Mükemmel', icon: require('../assets/ok.png'), color: '#02a308' };
+      return { text: 'Mükemmel', icon: require('../assets/ok.png'), color: '#02a308', percentage: 20 };
     case 2:
-      return { text: 'İyi', icon: require('../assets/feedback-review.png'), color: '#47ad4b' };
+      return { text: 'İyi', icon: require('../assets/feedback-review.png'), color: '#47ad4b', percentage: 40 };
     case 3:
-      return { text: 'Ortalama', icon: require('../assets/unlike.png'), color: 'orange' };
+      return { text: 'Ortalama', icon: require('../assets/unlike.png'), color: 'orange', percentage: 60 };
     case 4:
-      return { text: 'Kötü', icon: require('../assets/chat.png'), color: '#FF5722' };
+      return { text: 'Kötü', icon: require('../assets/chat.png'), color: '#FF5722', percentage: 80 };
     case 5:
-      return { text: 'Çok Kötü', icon: require('../assets/air-pollution.png'), color: '#F44336' };
+      return { text: 'Çok Kötü', icon: require('../assets/air-pollution.png'), color: '#F44336', percentage: 100 };
     default:
-      return { text: 'Bilinmiyor', icon: require('../assets/air-pollution.png'), color: '#9E9E9E' };
+      return { text: 'Bilinmiyor', icon: require('../assets/air-pollution.png'), color: '#9E9E9E', percentage: 0 };
   }
 };
 
@@ -55,6 +57,21 @@ const AirQualityScreen = ({ airQuality }) => {
                 </CustomText>
               </View>
             </View>
+
+            {/* Linear Gradient Bar */}
+            <LinearGradient
+              colors={['#02a308', '#FFFF00', '#FF5722', '#F44336']}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={styles.gradientBar}
+            >
+              <View
+                style={[
+                  styles.indicator,
+                  { left: `${airQualityDetails.percentage}%` }, // Indicator position based on AQI level
+                ]}
+              />
+            </LinearGradient>
           </View>
         ) : (
           <Text style={styles.dataText}>Hava kalitesi verisi yok.</Text>
@@ -97,6 +114,22 @@ const styles = StyleSheet.create({
   },
   dataText: {
     fontSize: 16,
+  },
+  gradientBar: {
+    marginTop: 20,
+    height: 10,
+    borderRadius: 5,
+    position: 'relative',
+  },
+  indicator: {
+    position: 'absolute',
+    top: -5,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#000',
   },
 });
 
