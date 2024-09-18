@@ -26,6 +26,7 @@ import UVIndexScreen from './components/UVIndexScreen';
 import SunriseSunsetCard from './components/SunriseSunsetCard';
 import DewPointCard from './components/DewPointCard';
 import { WeatherProvider } from './context/WeatherContext';
+import MoonPhaseCard from './components/MoonPhaseCard';
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
 const App = () => {
@@ -40,6 +41,7 @@ const App = () => {
   const [selectedCity, setSelectedCity] = useState(null);
   const [uvIndex, setUVIndex] = useState(null);
   const [sunData, setSunData] = useState({ sunrise: null, sunset: null });
+  const [moonData, setMoonData] = useState({ moonrise: null, moonset: null, moonPhase: null });
 
   // Animated value for scroll position
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -171,22 +173,47 @@ const App = () => {
         `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
       );
       const weatherData = response.data;
-      
+  
       // Güneş doğuşu ve batışı zamanlarını hesapla
       const sunData = {
         sunrise: readTimeStamp(weatherData.sys.sunrise, weatherData.timezone),
         sunset: readTimeStamp(weatherData.sys.sunset, weatherData.timezone),
       };
   
-      // Güneş verilerini set et
+      // Görüş mesafesi verisini al
+      const visibility = weatherData.visibility;
+  
+      // One Call API'den ay verilerini çek
+      const moonData = await fetchMoonData(lat, lon);
+  
+      // Güneş ve ay verilerini set et
       setSunData(sunData);
-      
-      return weatherData;
+      setMoonData(moonData); // Ay verilerini state'e set et
+  
+      // Görüş mesafesi verisini döndür
+      return { ...weatherData, visibility };
     } catch (error) {
       console.error("Error fetching weather by location:", error);
       return null;
     }
   };
+  
+  // Ay verilerini çekmek için fonksiyon
+  const fetchMoonData = async (lat, lon) => {
+    try {
+      const response = await axios.get(
+        `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,daily&appid=${API_KEY}&units=metric`
+      );
+      const {  moon_phase } = response.data.current;
+      return {
+        moonPhase: moon_phase,
+      };
+    } catch (error) {
+      console.error("Error fetching moon data:", error);
+      return { moonrise: null, moonset: null, moonPhase: null };
+    }
+  };
+  
 
   const fetchHourlyWeather = async (lat, lon) => {
     const response = await axios.get(
@@ -257,7 +284,12 @@ const App = () => {
           <AirQualityScreen airQuality={airQuality} />
           <UVIndexScreen uvIndex={uvIndex} />
           <SunriseSunsetCard sunrise={sunData.sunrise} sunset={sunData.sunset} />
-          <DewPointCard/>
+          <MoonPhaseCard 
+  moonrise={moonData.moonrise} 
+  moonset={moonData.moonset} 
+  moonPhase={moonData.moonPhase} 
+/>
+          <DewPointCard visibility={weather?.visibility}/>
           <StatusBar backgroundColor="#87CEEB" barStyle="light-content" translucent />
         </ScrollView>
       </LinearGradient>

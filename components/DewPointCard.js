@@ -6,7 +6,7 @@ const calculateDewPoint = (temperature, humidity) => {
   return temperature - ((100 - humidity) / 5);
 };
 
-const DewPointCard = () => {
+const DewPointCard = ( {visibility}) => {
   const { temperature, humidity } = useWeather(); 
 
   const dewPoint = temperature !== null && humidity !== null ? calculateDewPoint(temperature, humidity) : null;
@@ -16,6 +16,9 @@ const DewPointCard = () => {
       <CustomText fontFamily='pop' style={styles.text}>
         Çiy Noktası: {dewPoint !== null ? dewPoint.toFixed(2) + '°C' : 'Hesaplanıyor...'}
       </CustomText>
+      <CustomText fontFamily='pop' style={styles.text}>
+        Görüş Mesafesi: {visibility ? `${visibility / 1000} km` : 'N/A'}
+      </CustomText>
     </View>
   );
 };
@@ -23,12 +26,12 @@ const DewPointCard = () => {
 const styles = StyleSheet.create({
   container: {
     padding: 10,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: 'white',
     borderRadius: 10,
     marginVertical: 5,
   },
   text: {
-    fontSize: 18,
+    fontSize: 16,
     textAlign: 'center',
   },
 });
