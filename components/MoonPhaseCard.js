@@ -13,20 +13,42 @@ import lastQuarter from '../assets/night.png';
 import waningCrescent from '../assets/night.png';
 
 const MoonPhaseCard = ({ moonPhase }) => {
-  // Get the correct image and description for each moon phase
-  const getMoonPhaseDetails = (phase) => {
-    if (phase === 0 || phase === 1) return { description: 'Yeni Ay', image: newMoon };
-    if (phase < 0.25) return { description: 'Hilal', image: waxingCrescent };
-    if (phase === 0.25) return { description: 'İlk Dördün', image: firstQuarter };
-    if (phase < 0.5) return { description: 'Büyüyen Hilal', image: waxingGibbous };
-    if (phase === 0.5) return { description: 'Dolunay', image: fullMoon };
-    if (phase < 0.75) return { description: 'Küçülen Dolunay', image: waningGibbous };
-    if (phase === 0.75) return { description: 'Son Dördün', image: lastQuarter };
-    if (phase < 1) return { description: 'Küçülen Hilal', image: waningCrescent };
-    return { description: 'Bilinmeyen', image: null };
+  const moonCycleDays = 29.53;
+
+  // Get current date
+  const today = new Date();
+  const day = today.getDate();
+  const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+  const month = monthNames[today.getMonth()]; // Get month name
+  const year = today.getFullYear();
+
+  // Function to add days to the current date and get the next phase date
+  const addDays = (date, days) => {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
   };
 
-  const { description, image } = getMoonPhaseDetails(moonPhase);
+  // Get the correct image and description for each moon phase
+  const getMoonPhaseDetails = (phase) => {
+    if (phase === 0 || phase === 1) return { description: 'Yeni Ay', image: newMoon, nextPhase: 'Hilal', daysUntilNext: (0.25 - phase) * moonCycleDays };
+    if (phase < 0.25) return { description: 'Hilal', image: waxingCrescent, nextPhase: 'İlk Dördün', daysUntilNext: (0.25 - phase) * moonCycleDays };
+    if (phase === 0.25) return { description: 'İlk Dördün', image: firstQuarter, nextPhase: 'Büyüyen Hilal', daysUntilNext: (0.5 - phase) * moonCycleDays };
+    if (phase < 0.5) return { description: 'Büyüyen Hilal', image: waxingGibbous, nextPhase: 'Dolunay', daysUntilNext: (0.5 - phase) * moonCycleDays };
+    if (phase === 0.5) return { description: 'Dolunay', image: fullMoon, nextPhase: 'Küçülen Dolunay', daysUntilNext: (0.75 - phase) * moonCycleDays };
+    if (phase < 0.75) return { description: 'Küçülen Dolunay', image: waningGibbous, nextPhase: 'Son Dördün', daysUntilNext: (0.75 - phase) * moonCycleDays };
+    if (phase === 0.75) return { description: 'Son Dördün', image: lastQuarter, nextPhase: 'Küçülen Hilal', daysUntilNext: (1 - phase) * moonCycleDays };
+    if (phase < 1) return { description: 'Küçülen Hilal', image: waningCrescent, nextPhase: 'Yeni Ay', daysUntilNext: (1 - phase) * moonCycleDays };
+    return { description: 'Bilinmeyen', image: null, nextPhase: 'Bilinmeyen', daysUntilNext: 0 };
+  };
+
+  const { description, image, nextPhase, daysUntilNext } = getMoonPhaseDetails(moonPhase);
+
+  // Calculate the date of the next phase
+  const nextPhaseDate = addDays(today, daysUntilNext);
+  const nextPhaseDay = nextPhaseDate.getDate();
+  const nextPhaseMonth = monthNames[nextPhaseDate.getMonth()];
+  const nextPhaseYear = nextPhaseDate.getFullYear();
 
   return (
     <View style={styles.container}>
@@ -36,6 +58,9 @@ const MoonPhaseCard = ({ moonPhase }) => {
       {image && (
         <Image source={image} style={styles.image} resizeMode="contain" />
       )}
+      <CustomText fontFamily="pop" style={styles.text}>
+        Sonraki Ay Evresi: {nextPhase} - {daysUntilNext.toFixed(0)} gün sonra {nextPhaseDay} {nextPhaseMonth} {nextPhaseYear}
+      </CustomText>
     </View>
   );
 };
@@ -51,7 +76,7 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 18,
     textAlign: 'center',
-    marginBottom: 10,
+    marginVertical: 10,
   },
   image: {
     width: 75,

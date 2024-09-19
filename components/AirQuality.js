@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.5,
     shadowRadius: 5,
-    marginVertical: 10,
+    marginVertical: 5,
   },
   titleContainer: {
     alignItems: 'center',

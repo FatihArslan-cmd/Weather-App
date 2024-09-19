@@ -4,7 +4,7 @@ import { Card } from 'react-native-paper';
 import translateWeatherDescription from '../utils/translateWeatherDescription';
 import CustomText from './CustomText';
 
-const HourlyWeatherCard = ({ hourlyWeather }) => {
+const HourlyWeatherCard = ({ hourlyWeather = [] }) => {  // Default empty array
   const scrollX = useRef(new Animated.Value(0)).current;
 
   return (
@@ -20,40 +20,46 @@ const HourlyWeatherCard = ({ hourlyWeather }) => {
           scrollEventThrottle={16} // Smooth scrolling
         >
           <View style={styles.hourlyWeatherContainer}>
-            {hourlyWeather.map((hourData, index) => {
-              const inputRange = [
-                (index - 1) * 100, // Adjust based on item width
-                index * 100,
-                (index + 1) * 100,
-              ];
+            {hourlyWeather.length > 0 ? (
+              hourlyWeather.map((hourData, index) => {
+                const inputRange = [
+                  (index - 1) * 100, // Adjust based on item width
+                  index * 100,
+                  (index + 1) * 100,
+                ];
 
-              const scale = scrollX.interpolate({
-                inputRange,
-                outputRange: [0.9, 1.1, 0.9], // Scale effect (small to large to small)
-                extrapolate: 'clamp',
-              });
+                const scale = scrollX.interpolate({
+                  inputRange,
+                  outputRange: [0.9, 1.1, 0.9], // Scale effect (small to large to small)
+                  extrapolate: 'clamp',
+                });
 
-              return (
-                <Animated.View
-                  key={index}
-                  style={[styles.hourlyItem, { transform: [{ scale }] }]}
-                >
-                  <CustomText fontFamily="pop" style={styles.hourText}>
-                    {new Date(hourData.dt * 1000).getHours()}:00
-                  </CustomText>
-                  <Image
-                    source={{ uri: `https://openweathermap.org/img/wn/${hourData.weather[0].icon}@2x.png` }}
-                    style={styles.weatherIcon}
-                  />
-                  <CustomText fontFamily="pop" style={styles.weatherText}>
-                    {translateWeatherDescription(hourData.weather[0].description)}
-                  </CustomText>
-                  <CustomText fontFamily="pop" style={styles.tempText}>
-                    {hourData.main.temp}°C
-                  </CustomText>
-                </Animated.View>
-              );
-            })}
+                return (
+                  <Animated.View
+                    key={index}
+                    style={[styles.hourlyItem, { transform: [{ scale }] }]}
+                  >
+                    <CustomText fontFamily="pop" style={styles.hourText}>
+                      {new Date(hourData.dt * 1000).getHours()}:00
+                    </CustomText>
+                    <Image
+                      source={{ uri: `https://openweathermap.org/img/wn/${hourData.weather[0].icon}@2x.png` }}
+                      style={styles.weatherIcon}
+                    />
+                    <CustomText fontFamily="pop" style={styles.weatherText}>
+                      {translateWeatherDescription(hourData.weather[0].description)}
+                    </CustomText>
+                    <CustomText fontFamily="pop" style={styles.tempText}>
+                      {hourData.main.temp}°C
+                    </CustomText>
+                  </Animated.View>
+                );
+              })
+            ) : (
+              <CustomText fontFamily="pop" style={styles.emptyText}>
+                No weather data available.
+              </CustomText>
+            )}
           </View>
         </Animated.ScrollView>
       </Card.Content>
@@ -64,7 +70,7 @@ const HourlyWeatherCard = ({ hourlyWeather }) => {
 const styles = StyleSheet.create({
   containerCard: {
     borderRadius: 10,
-    margin:5
+    margin: 5,
   },
   hourlyWeatherContainer: {
     flexDirection: 'row',
@@ -89,6 +95,11 @@ const styles = StyleSheet.create({
   tempText: {
     fontSize: 18,
     textAlign: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
 
