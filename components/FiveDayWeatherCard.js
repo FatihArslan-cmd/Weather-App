@@ -1,49 +1,29 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { View, Text, FlatList, StyleSheet, Image } from 'react-native';
-import axios from 'axios';
-import API_KEY from '../API_KEY';
-import CustomText from './CustomText';
-const lat = 41.0082;  // Latitude for Istanbul
-const lon = 28.9784;  // Longitude for Istanbul
+import CustomText from './CustomText'; // Assuming CustomText is correctly defined elsewhere
 
-const FiveDayWeather = () => {
-  const [forecast, setForecast] = useState([]);
+const FiveDayWeather = ({ forecast }) => {
 
-  useEffect(() => {
-    const fetchWeather = async () => {
-      try {
-        const response = await axios.get(
-          `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
-        );
-
-        // Filter for noon (12:00) each day
-        const dailyData = response.data.list.filter(item => {
-          return new Date(item.dt * 1000).getHours() === 12;  // 12:00
-        });
-
-        setForecast(dailyData);
-      } catch (error) {
-        console.error('Error fetching weather data:', error);
-      }
-    };
-    fetchWeather();
-  }, []);
-
-  const getDayLabel = (date) => {
+  // Function to generate readable labels for the day
+  const getDayLabel = (timestamp) => {
     const today = new Date();
-    const forecastDate = new Date(date * 1000);
+    const forecastDate = new Date(timestamp * 1000); // Convert from UNIX timestamp
 
-    // For today show 'Bugün'
+    // If the forecast is for today
     if (forecastDate.toDateString() === today.toDateString()) {
       return 'Bugün';
     }
 
-    // For tomorrow show 'Yarın'
-    if (forecastDate.getDate() === today.getDate() + 1) {
+    // Calculate tomorrow's date
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    // If the forecast is for tomorrow
+    if (forecastDate.toDateString() === tomorrow.toDateString()) {
       return 'Yarın';
     }
 
-    // For other days show formatted date
+    // For other days, return formatted day in Turkish
     return forecastDate.toLocaleDateString('tr-TR', {
       weekday: 'long',
       year: 'numeric',
@@ -52,14 +32,25 @@ const FiveDayWeather = () => {
     });
   };
 
+  // Safeguard against null or undefined forecast data
+  if (!forecast) {
+    return (
+      <View style={styles.container}>
+        <CustomText fontFamily="pop" style={styles.noDataText}>
+          Hava durumu verisi mevcut değil.
+        </CustomText>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <FlatList
         data={forecast}
-        keyExtractor={(item, index) => index.toString()}
+        keyExtractor={(item) => item.dt.toString()} // Use UNIX timestamp as the key
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <CustomText fontFamily='pop' style={styles.date}>
+            <CustomText fontFamily="pop" style={styles.date}>
               {getDayLabel(item.dt)}
             </CustomText>
             <View style={styles.row}>
@@ -70,8 +61,10 @@ const FiveDayWeather = () => {
                 }}
               />
               <View style={styles.textContainer}>
-                <CustomText fontFamily='pop'>{item.main.temp}°C</CustomText>
-                <CustomText fontFamily='pop'>{item.weather[0].description}</CustomText>
+                <CustomText fontFamily="pop">{item.main.temp}°C</CustomText>
+                <CustomText fontFamily="pop">
+                  {item.weather[0].description}
+                </CustomText>
               </View>
             </View>
           </View>
@@ -86,11 +79,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 5,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 10,
+  noDataText: {
     textAlign: 'center',
+    fontSize: 18,
+    marginVertical: 20,
   },
   card: {
     padding: 10,

@@ -48,6 +48,8 @@ const MainScreen = () => {
   const [uvIndex, setUVIndex] = useState(null);
   const [sunData, setSunData] = useState({ sunrise: null, sunset: null });
   const [moonData, setMoonData] = useState({ moonrise: null, moonset: null, moonPhase: null });
+  const [forecast, setForecast] = useState(null); // 5-day forecast state
+
   const navigation = useNavigation(); // Navigasyon nesnesi
 
   // Animated value for scroll position
@@ -60,39 +62,40 @@ const MainScreen = () => {
   const handleCitySelect = async (city) => {
     setLoading(true);
     setSelectedCity(city);
-  
+
     try {
       if (city.isCurrentLocation) {
         await fetchWeatherByLocation(location.latitude, location.longitude);
         await fetchHourlyWeather(location.latitude, location.longitude);
         await fetchAirQuality(location.latitude, location.longitude);
         await fetchUVIndex(location.latitude, location.longitude);
+        await fetchFiveDayWeather(location.latitude, location.longitude); // Fetch 5-day weather
       } else {
         const response = await axios.get(
           `https://api.openweathermap.org/data/2.5/weather?q=${city.name}&appid=${API_KEY}&units=metric`
         );
         const weatherData = response.data;
-        
-        // Update location state with selected city's coordinates
         const { lat, lon } = weatherData.coord;
         setLocation({ latitude: lat, longitude: lon });
-  
+
         setWeather(weatherData);
         setSunData({
           sunrise: readTimeStamp(weatherData.sys.sunrise, weatherData.timezone),
           sunset: readTimeStamp(weatherData.sys.sunset, weatherData.timezone),
         });
-  
-        const [hourlyResponse, airQualityResponse, uvIndexResponse] = await Promise.all([
+
+        const [hourlyResponse, airQualityResponse, uvIndexResponse, forecastData] = await Promise.all([
           axios.get(`https://api.openweathermap.org/data/2.5/forecast?q=${city.name}&appid=${API_KEY}&units=metric`),
           axios.get(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`),
-          axios.get(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${API_KEY}`)
+          axios.get(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${API_KEY}`),
+          fetchFiveDayWeather(lat, lon) // Fetch 5-day weather data
         ]);
-  
+
         setHourlyWeather(hourlyResponse.data.list.slice(0, 10));
         setAirQuality(airQualityResponse.data);
         setUVIndex(uvIndexResponse.data.value);
-  
+        setForecast(forecastData); // Set forecast state
+
         setError('');
       }
     } catch (err) {
@@ -102,11 +105,11 @@ const MainScreen = () => {
       setAirQuality(null);
       setUVIndex(null);
       setSunData({ sunrise: null, sunset: null });
+      setForecast(null); // Clear forecast data
     } finally {
       setLoading(false);
     }
   };
-  
 
   const getLocationAsync = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -128,7 +131,6 @@ const MainScreen = () => {
       setAddress(`${street}, ${city}, ${region}`);
     }
 
-    // Check cache
     const cachedData = await AsyncStorage.getItem('weatherData');
     if (cachedData) {
       const { data, timestamp } = JSON.parse(cachedData);
@@ -137,7 +139,8 @@ const MainScreen = () => {
         setHourlyWeather(data.hourlyWeather);
         setAirQuality(data.airQuality);
         setUVIndex(data.uvIndex);
-        setSunData(data.sunData); // Set cached sunrise/sunset data
+        setSunData(data.sunData);
+        setForecast(data.forecast); // Set forecast data from cache
         setLoading(false);
         return;
       }
@@ -152,24 +155,27 @@ const MainScreen = () => {
       const hourlyData = await fetchHourlyWeather(lat, lon);
       const airQualityData = await fetchAirQuality(lat, lon);
       const uvIndexData = await fetchUVIndex(lat, lon);
-      const sunData = await fetchSunriseSunset(lat, lon); // Fetch sunrise/sunset data
-
-      // Cache data
+      const sunData = await fetchSunriseSunset(lat, lon);
+      const forecastData = await fetchFiveDayWeather(lat, lon);
+      setForecast(forecastData.length ? forecastData : null); // Eğer veri varsa, aksi takdirde null
+      
       const dataToCache = {
         weather: weatherData,
         hourlyWeather: hourlyData,
         airQuality: airQualityData,
         uvIndex: uvIndexData,
-        sunData: sunData, // Cache sunrise/sunset data
-
+        sunData: sunData,
+        forecast: forecastData, // Cache forecast data
       };
+
       await AsyncStorage.setItem('weatherData', JSON.stringify({ data: dataToCache, timestamp: Date.now() }));
 
       setWeather(weatherData);
       setHourlyWeather(hourlyData);
       setAirQuality(airQualityData);
       setUVIndex(uvIndexData);
-      setSunData(sunData); // Set sunrise/sunset data
+      setSunData(sunData);
+      setForecast(forecastData); // Set forecast state
     } catch (error) {
       setError('Data could not be fetched.');
       console.log('Error fetching weather data:', error);
@@ -184,25 +190,18 @@ const MainScreen = () => {
         `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
       );
       const weatherData = response.data;
-  
-      // Güneş doğuşu ve batışı zamanlarını hesapla
+
       const sunData = {
         sunrise: readTimeStamp(weatherData.sys.sunrise, weatherData.timezone),
         sunset: readTimeStamp(weatherData.sys.sunset, weatherData.timezone),
       };
-  
-      // Görüş mesafesi verisini al
-      const visibility = weatherData.visibility;
-  
-      // One Call API'den ay verilerini çek
+
       const moonData = await fetchMoonData(lat, lon);
-  
-      // Güneş ve ay verilerini set et
+
       setSunData(sunData);
-      setMoonData(moonData); // Ay verilerini state'e set et
-  
-      // Görüş mesafesi verisini döndür
-      return { ...weatherData, visibility };
+      setMoonData(moonData);
+
+      return weatherData;
     } catch (error) {
       console.error("Error fetching weather by location:", error);
       return null;
@@ -239,7 +238,22 @@ const MainScreen = () => {
     );
     return response.data;
   };
-  
+  const fetchFiveDayWeather = async (lat, lon) => {
+    try {
+      const response = await axios.get(
+        `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
+      );
+
+      const dailyData = response.data.list.filter(item => {
+        return new Date(item.dt * 1000).getHours() === 12; // 12:00
+      });
+
+      return dailyData;
+    } catch (error) {
+      console.error('Error fetching 5-day weather data:', error);
+      return [];
+    }
+  };
   const fetchSunriseSunset = async (lat, lon) => {
     try {
       const response = await axios.get(
@@ -291,23 +305,23 @@ const MainScreen = () => {
             { useNativeDriver: false } // Change to `true` if you're animating transform properties only
           )}
         >
-                    <TouchableOpacity 
-        style={styles.settingsContainer}
-        onPress={() => navigation.navigate('SettingsScreen')} // Basıldığında ayarlar ekranına git
-      >
+        <TouchableOpacity 
+         style={styles.settingsContainer}
+         onPress={() => navigation.navigate('SettingsScreen')} // Basıldığında ayarlar ekranına git
+        >
         <Icon name="settings-sharp" size={28} color="black" />
-      </TouchableOpacity>
+        </TouchableOpacity>
           <WeatherCard weather={weather} />
           <HourlyWeatherCard hourlyWeather={hourlyWeather} />
-          <FiveDayWeather/>
+          <FiveDayWeather forecast={forecast} />
           <AirQualityScreen airQuality={airQuality} />
           <UVIndexScreen uvIndex={uvIndex} />
           <SunriseSunsetCard sunrise={sunData.sunrise} sunset={sunData.sunset} />
           <MoonPhaseCard 
-  moonrise={moonData.moonrise} 
-  moonset={moonData.moonset} 
-  moonPhase={moonData.moonPhase} 
-/>
+             moonrise={moonData.moonrise} 
+             moonset={moonData.moonset} 
+             moonPhase={moonData.moonPhase} 
+           />
           <DewPointCard visibility={weather?.visibility}/>
           <MapComponent location={location}/>
           <SocialShareBar/>
