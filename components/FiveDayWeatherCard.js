@@ -1,5 +1,6 @@
+import translateWeatherDescription from '../utils/translateWeatherDescription';
 import React from 'react';
-import { View, Text, FlatList, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import CustomText from './CustomText'; // Assuming CustomText is correctly defined elsewhere
 
 const FiveDayWeather = ({ forecast }) => {
@@ -45,31 +46,28 @@ const FiveDayWeather = ({ forecast }) => {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={forecast}
-        keyExtractor={(item) => item.dt.toString()} // Use UNIX timestamp as the key
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <CustomText fontFamily="pop" style={styles.date}>
-              {getDayLabel(item.dt)}
-            </CustomText>
-            <View style={styles.row}>
-              <Image
-                style={styles.icon}
-                source={{
-                  uri: `https://openweathermap.org/img/wn/${item.weather[0].icon}@2x.png`,
-                }}
-              />
-              <View style={styles.textContainer}>
-                <CustomText fontFamily="pop">{item.main.temp}°C</CustomText>
-                <CustomText fontFamily="pop">
-                  {item.weather[0].description}
-                </CustomText>
-              </View>
+      {forecast.map((item) => (
+        <View key={item.dt.toString()} style={styles.card}>
+          <CustomText fontFamily="pop" style={styles.date}>
+            {getDayLabel(item.dt)}
+          </CustomText>
+          <View style={styles.row}>
+            <Image
+              style={styles.icon}
+              source={{
+                uri: `https://openweathermap.org/img/wn/${item.weather[0].icon}@2x.png`,
+              }}
+            />
+            <View style={styles.textContainer}>
+              <CustomText fontFamily="pop">{item.main.temp}°C</CustomText>
+              {/* Hava durumu açıklamasını Türkçe'ye çevir */}
+              <CustomText fontFamily="pop">
+                {translateWeatherDescription(item.weather[0].description)}
+              </CustomText>
             </View>
           </View>
-        )}
-      />
+        </View>
+      ))}
     </View>
   );
 };

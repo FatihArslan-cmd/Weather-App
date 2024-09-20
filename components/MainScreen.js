@@ -46,9 +46,8 @@ const MainScreen = () => {
   const [address, setAddress] = useState('');
   const [selectedCity, setSelectedCity] = useState(null);
   const [uvIndex, setUVIndex] = useState(null);
-  const [sunData, setSunData] = useState({ sunrise: null, sunset: null });
-  const [moonData, setMoonData] = useState({ moonrise: null, moonset: null, moonPhase: null });
   const [forecast, setForecast] = useState(null); // 5-day forecast state
+  const [sunData, setSunData] = useState({ sunrise: '', sunset: '' }); // New state for sunrise and sunset
 
   const navigation = useNavigation(); // Navigasyon nesnesi
 
@@ -69,7 +68,8 @@ const MainScreen = () => {
         await fetchHourlyWeather(location.latitude, location.longitude);
         await fetchAirQuality(location.latitude, location.longitude);
         await fetchUVIndex(location.latitude, location.longitude);
-        await fetchFiveDayWeather(location.latitude, location.longitude); // Fetch 5-day weather
+        await fetchFiveDayWeather(location.latitude, location.longitude); // Fetch 5-day 
+        await fetchSunData(location.latitude, location.longitude); // Fetch sun data
       } else {
         const response = await axios.get(
           `https://api.openweathermap.org/data/2.5/weather?q=${city.name}&appid=${API_KEY}&units=metric`
@@ -79,24 +79,21 @@ const MainScreen = () => {
         setLocation({ latitude: lat, longitude: lon });
 
         setWeather(weatherData);
-        setSunData({
-          sunrise: readTimeStamp(weatherData.sys.sunrise, weatherData.timezone),
-          sunset: readTimeStamp(weatherData.sys.sunset, weatherData.timezone),
-        });
 
-        const [hourlyResponse, airQualityResponse, uvIndexResponse, forecastData] = await Promise.all([
+        const [hourlyResponse, airQualityResponse, uvIndexResponse, forecastData, sunData] = await Promise.all([
           axios.get(`https://api.openweathermap.org/data/2.5/forecast?q=${city.name}&appid=${API_KEY}&units=metric`),
           axios.get(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`),
           axios.get(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${API_KEY}`),
-          fetchFiveDayWeather(lat, lon) // Fetch 5-day weather data
+          fetchFiveDayWeather(lat, lon),
+          fetchSunData(lat, lon),
         ]);
-
+        
         setHourlyWeather(hourlyResponse.data.list.slice(0, 10));
         setAirQuality(airQualityResponse.data);
         setUVIndex(uvIndexResponse.data.value);
         setForecast(forecastData); // Set forecast state
-
         setError('');
+        setSunData(sunData); // Set sun data
       }
     } catch (err) {
       setError('Hava durumu bilgisi alınamadı.');
@@ -104,8 +101,8 @@ const MainScreen = () => {
       setHourlyWeather([]);
       setAirQuality(null);
       setUVIndex(null);
-      setSunData({ sunrise: null, sunset: null });
       setForecast(null); // Clear forecast data
+      setSunData({ sunrise: '', sunset: '' }); // Clear sun data
     } finally {
       setLoading(false);
     }
@@ -139,8 +136,8 @@ const MainScreen = () => {
         setHourlyWeather(data.hourlyWeather);
         setAirQuality(data.airQuality);
         setUVIndex(data.uvIndex);
-        setSunData(data.sunData);
         setForecast(data.forecast); // Set forecast data from cache
+        setSunData(data.sunData); // Set sun data from cache
         setLoading(false);
         return;
       }
@@ -155,17 +152,16 @@ const MainScreen = () => {
       const hourlyData = await fetchHourlyWeather(lat, lon);
       const airQualityData = await fetchAirQuality(lat, lon);
       const uvIndexData = await fetchUVIndex(lat, lon);
-      const sunData = await fetchSunriseSunset(lat, lon);
       const forecastData = await fetchFiveDayWeather(lat, lon);
-      setForecast(forecastData.length ? forecastData : null); // Eğer veri varsa, aksi takdirde null
-      
+      const sunData = await fetchSunData(lat, lon); // Fetch sun data
+
       const dataToCache = {
         weather: weatherData,
         hourlyWeather: hourlyData,
         airQuality: airQualityData,
         uvIndex: uvIndexData,
-        sunData: sunData,
-        forecast: forecastData, // Cache forecast data
+        forecast: forecastData,
+        sunData : sunData,
       };
 
       await AsyncStorage.setItem('weatherData', JSON.stringify({ data: dataToCache, timestamp: Date.now() }));
@@ -174,56 +170,34 @@ const MainScreen = () => {
       setHourlyWeather(hourlyData);
       setAirQuality(airQualityData);
       setUVIndex(uvIndexData);
-      setSunData(sunData);
-      setForecast(forecastData); // Set forecast state
+      setForecast(forecastData);
+      setSunData(sunData); // Set sun data
     } catch (error) {
       setError('Data could not be fetched.');
-      console.log('Error fetching weather data:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchWeatherByLocation = async (lat, lon) => {
+  const fetchSunData = async (lat, lon) => {
     try {
       const response = await axios.get(
         `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
       );
-      const weatherData = response.data;
+      const { sunrise, sunset } = response.data.sys;
+      const timezoneOffset = response.data.timezone;
 
-      const sunData = {
-        sunrise: readTimeStamp(weatherData.sys.sunrise, weatherData.timezone),
-        sunset: readTimeStamp(weatherData.sys.sunset, weatherData.timezone),
-      };
+      const sunriseTime = readTimeStamp(sunrise, timezoneOffset);
+      const sunsetTime = readTimeStamp(sunset, timezoneOffset);
 
-      const moonData = await fetchMoonData(lat, lon);
-
-      setSunData(sunData);
-      setMoonData(moonData);
-
-      return weatherData;
+      setSunData({
+        sunrise: sunriseTime,
+        sunset: sunsetTime,
+      });
     } catch (error) {
-      console.error("Error fetching weather by location:", error);
-      return null;
+      console.error('Error fetching sun data:', error);
     }
   };
-  
-  // Ay verilerini çekmek için fonksiyon
-  const fetchMoonData = async (lat, lon) => {
-    try {
-      const response = await axios.get(
-        `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,daily&appid=${API_KEY}&units=metric`
-      );
-      const {  moon_phase } = response.data.current;
-      return {
-        moonPhase: moon_phase,
-      };
-    } catch (error) {
-      console.error("Error fetching moon data:", error);
-      return { moonrise: null, moonset: null, moonPhase: null };
-    }
-  };
-  
 
   const fetchHourlyWeather = async (lat, lon) => {
     const response = await axios.get(
@@ -254,21 +228,7 @@ const MainScreen = () => {
       return [];
     }
   };
-  const fetchSunriseSunset = async (lat, lon) => {
-    try {
-      const response = await axios.get(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
-      );
-      const { sunrise, sunset, timezone } = response.data.sys;
-      return {
-        sunrise: readTimeStamp(sunrise, timezone),
-        sunset: readTimeStamp(sunset, timezone),
-      };
-    } catch (error) {
-      console.error('Error fetching sunrise/sunset data:', error);
-      return { sunrise: null, sunset: null };
-    }
-  };
+
   const readTimeStamp = (unixTimestamp, timezoneOffset) => {
     const clientOffset = new Date().getTimezoneOffset();
     const offsetTimestamp = unixTimestamp + clientOffset * 60 + timezoneOffset;
@@ -317,11 +277,7 @@ const MainScreen = () => {
           <AirQualityScreen airQuality={airQuality} />
           <UVIndexScreen uvIndex={uvIndex} />
           <SunriseSunsetCard sunrise={sunData.sunrise} sunset={sunData.sunset} />
-          <MoonPhaseCard 
-             moonrise={moonData.moonrise} 
-             moonset={moonData.moonset} 
-             moonPhase={moonData.moonPhase} 
-           />
+          <MoonPhaseCard/>
           <DewPointCard visibility={weather?.visibility}/>
           <MapComponent location={location}/>
           <SocialShareBar/>
