@@ -64,6 +64,10 @@ const FiveDayWeather = ({ forecast }) => {
               <CustomText fontFamily="pop">
                 {translateWeatherDescription(item.weather[0].description)}
               </CustomText>
+              {/* Add the rain probability */}
+              <CustomText fontFamily="pop" style={styles.popText}>
+                Yağmur İhtimali: {Math.round(item.pop * 100)}%
+              </CustomText>
             </View>
           </View>
         </View>
@@ -105,6 +109,10 @@ const styles = StyleSheet.create({
   icon: {
     width: 80,
     height: 80,
+  },
+  popText: {
+    fontSize: 11,
+    textAlign: 'center',
   },
 });
 

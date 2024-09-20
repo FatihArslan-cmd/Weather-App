@@ -2,45 +2,41 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, Image, TouchableOpacity, Animated } from 'react-native';
 import { Card } from 'react-native-paper';
 import CustomText from './CustomText';
-import { MaterialIcons } from '@expo/vector-icons'; // Simge için MaterialIcons kütüphanesini kullanabilirsiniz.
+import { MaterialIcons } from '@expo/vector-icons';
 
-const formatTo24Hour = (time) => {
-  if (!time || typeof time !== 'string' || !time.includes(':')) {
-    return 'Invalid time'; // or handle error as needed
-  }
+// Helper function to convert Unix timestamp to time with timezone support
 
-  const [hour, minute] = time.split(':');
-  const period = time.includes('AM') || time.includes('PM') ? time.slice(-2) : null;
 
-  let formattedHour = parseInt(hour, 10);
-
-  if (period === 'PM' && formattedHour < 12) {
-    formattedHour += 12;
-  }
-  if (period === 'AM' && formattedHour === 12) {
-    formattedHour = 0;
-  }
-
-  return `${formattedHour < 10 ? '0' + formattedHour : formattedHour}:${minute.slice(0, 2)}`;
-};
-
-// Zaman farkını dakika cinsinden hesapla
-const getTimeDifference = (startTime, endTime) => {
-  const [startHour, startMinute] = startTime.split(':').map(Number);
-  const [endHour, endMinute] = endTime.split(':').map(Number);
-
-  const startTotalMinutes = startHour * 60 + startMinute;
-  const endTotalMinutes = endHour * 60 + endMinute;
-
-  return endTotalMinutes - startTotalMinutes;
-};
-
-const SunriseSunsetCard = ({ sunrise, sunset }) => {
+const SunriseSunsetCard = ({ sunrise, sunset, timezone }) => {
   const [is24Hour, setIs24Hour] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const [dayLength, setDayLength] = useState(null);
   const [remainingDaylight, setRemainingDaylight] = useState(null);
-
+  const convertUnixToTime = (unixTimestamp, is24Hour) => {
+    const clientOffset = new Date().getTimezoneOffset();
+    const offsetTimestamp = unixTimestamp + clientOffset * 60 + timezone;
+    const date = new Date(offsetTimestamp * 1000);
+    let hours = date.getHours();
+    let minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+  
+    if (!is24Hour) {
+      hours = hours % 12;
+      hours = hours ? hours : 12; // If 0, make it 12 (midnight in 12-hour format)
+    }
+  
+    return {
+      timeString: `${hours < 10 ? '0' + hours : hours}:${minutes < 10 ? '0' + minutes : minutes} ${!is24Hour ? ampm : ''}`,
+      hours: is24Hour ? date.getHours() : (date.getHours() % 12) + (date.getHours() >= 12 ? 12 : 0),
+      minutes: minutes,
+    };
+  };
+  const getTimeDifference = (startHours, startMinutes, endHours, endMinutes) => {
+    const startTotalMinutes = startHours * 60 + startMinutes;
+    const endTotalMinutes = endHours * 60 + endMinutes;
+  
+    return endTotalMinutes - startTotalMinutes;
+  };
   const toggleTimeFormat = () => {
     Animated.timing(fadeAnim, {
       toValue: 0,
@@ -58,19 +54,19 @@ const SunriseSunsetCard = ({ sunrise, sunset }) => {
 
   useEffect(() => {
     if (sunrise && sunset) {
-      const sunrise24 = formatTo24Hour(sunrise); // 12 saat formatı da olsa 24 saate çevir
-      const sunset24 = formatTo24Hour(sunset); // 12 saat formatı da olsa 24 saate çevir
+      const { hours: sunriseHours, minutes: sunriseMinutes } = convertUnixToTime(sunrise, is24Hour, timezone);
+      const { hours: sunsetHours, minutes: sunsetMinutes } = convertUnixToTime(sunset, is24Hour, timezone);
 
-      // Gün uzunluğunu hesapla
-      const totalDaylightMinutes = getTimeDifference(sunrise24, sunset24);
+      // Calculate day length
+      const totalDaylightMinutes = getTimeDifference(sunriseHours, sunriseMinutes, sunsetHours, sunsetMinutes);
       const hours = Math.floor(totalDaylightMinutes / 60);
       const minutes = totalDaylightMinutes % 60;
       setDayLength(`${hours}h ${minutes}m`);
 
-      // Kalan gün ışığını hesapla
+      // Calculate remaining daylight
       const now = new Date();
-      const currentTime = `${now.getHours()}:${now.getMinutes()}`;
-      const remainingMinutes = getTimeDifference(currentTime, sunset24);
+      const currentTimeData = convertUnixToTime(Math.floor(now.getTime() / 1000), is24Hour, timezone);
+      const remainingMinutes = getTimeDifference(currentTimeData.hours, currentTimeData.minutes, sunsetHours, sunsetMinutes);
 
       if (remainingMinutes > 0) {
         const remHours = Math.floor(remainingMinutes / 60);
@@ -80,7 +76,7 @@ const SunriseSunsetCard = ({ sunrise, sunset }) => {
         setRemainingDaylight('It is night');
       }
     }
-  }, [sunrise, sunset, is24Hour]);
+  }, [sunrise, sunset, is24Hour, timezone]);
 
   return (
     <Card style={styles.card}>
@@ -90,29 +86,23 @@ const SunriseSunsetCard = ({ sunrise, sunset }) => {
             <MaterialIcons name="swap-horiz" size={24} color="black" />
           </TouchableOpacity>
 
-          {/* Animasyonlu görünüm */}
           <Animated.View style={{ opacity: fadeAnim }}>
             <View style={styles.blockContainer}>
               <Image source={require('../assets/sunrise.png')} style={styles.icon} />
               <CustomText fontFamily="pop" style={styles.dataText}>
-                Sunrise: {is24Hour && sunrise ? formatTo24Hour(sunrise) : sunrise || 'N/A'}
-              </CustomText>
+                Sunrise: {convertUnixToTime(sunrise, is24Hour, timezone).timeString || 'N/A'}              </CustomText>
             </View>
             <View style={styles.blockContainer}>
               <Image source={require('../assets/sunset.png')} style={styles.icon} />
               <CustomText fontFamily="pop" style={styles.dataText}>
-                Sunset: {is24Hour && sunset ? formatTo24Hour(sunset) : sunset || 'N/A'}
+                Sunset: {convertUnixToTime(sunset, is24Hour, timezone).timeString || 'N/A'}
               </CustomText>
             </View>
-
-            {/* Gün uzunluğu */}
             <View style={styles.blockContainer}>
               <CustomText fontFamily="pop" style={styles.dataText}>
                 Day Length: {dayLength || 'N/A'}
               </CustomText>
             </View>
-
-            {/* Kalan gün ışığı */}
             <View style={styles.blockContainer}>
               <CustomText fontFamily="pop" style={styles.dataText}>
                 Remaining Daylight: {remainingDaylight || 'N/A'}

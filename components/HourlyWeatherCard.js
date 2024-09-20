@@ -30,7 +30,7 @@ const HourlyWeatherCard = ({ hourlyWeather = [] }) => {  // Default empty array
 
                 const scale = scrollX.interpolate({
                   inputRange,
-                  outputRange: [0.9, 1.1, 0.9], // Scale effect (small to large to small)
+                  outputRange: [0.9, 1.0, 0.9], // Scale effect (small to large to small)
                   extrapolate: 'clamp',
                 });
 
@@ -51,6 +51,10 @@ const HourlyWeatherCard = ({ hourlyWeather = [] }) => {  // Default empty array
                     </CustomText>
                     <CustomText fontFamily="pop" style={styles.tempText}>
                       {hourData.main.temp}°C
+                    </CustomText>
+                    {/* Add the rain probability */}
+                    <CustomText fontFamily="pop" style={styles.popText}>
+                      Yağmur İhtimali: {Math.round(hourData.pop * 100)}%
                     </CustomText>
                   </Animated.View>
                 );
@@ -95,6 +99,11 @@ const styles = StyleSheet.create({
   tempText: {
     fontSize: 18,
     textAlign: 'center',
+  },
+  popText: {
+    fontSize: 10,
+    textAlign: 'center',
+    marginTop: 5,
   },
   emptyText: {
     fontSize: 16,
