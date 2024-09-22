@@ -5,12 +5,12 @@ import {
   Alert,
   Modal,
   Image,
-  StatusBar,
   Animated,
   ScrollView,
   RefreshControl,
   TouchableOpacity
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import axios from 'axios';
@@ -65,6 +65,7 @@ const MainScreen = () => {
 
     try {
       if (city.isCurrentLocation) {
+        await fetchWeatherByLocation(location.latitude, location.longitude);
         await fetchHourlyWeather(location.latitude, location.longitude);
         await fetchAirQuality(location.latitude, location.longitude);
         await fetchUVIndex(location.latitude, location.longitude);
@@ -149,9 +150,17 @@ const MainScreen = () => {
 
     await fetchWeatherData(location.coords.latitude, location.coords.longitude);
   };
-
+  const fetchWeatherByLocation = async (lat, lon) => {
+    const response = await axios.get(
+      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
+    );
+    return {
+      ...response.data,
+    };
+  };
   const fetchWeatherData = async (lat, lon) => {
     try {
+      const weatherData = await fetchWeatherByLocation(lat, lon);
       const hourlyData = await fetchHourlyWeather(lat, lon);
       const airQualityData = await fetchAirQuality(lat, lon);
       const uvIndexData = await fetchUVIndex(lat, lon);
@@ -160,6 +169,7 @@ const MainScreen = () => {
       setForecast(forecastData.length ? forecastData : null); // Eğer veri varsa, aksi takdirde null
       
       const dataToCache = {
+        weather: weatherData,
         hourlyWeather: hourlyData,
         airQuality: airQualityData,
         uvIndex: uvIndexData,
@@ -169,6 +179,7 @@ const MainScreen = () => {
 
       await AsyncStorage.setItem('weatherData', JSON.stringify({ data: dataToCache, timestamp: Date.now() }));
 
+      setWeather(weatherData);
       setHourlyWeather(hourlyData);
       setAirQuality(airQualityData);
       setUVIndex(uvIndexData);
@@ -258,7 +269,11 @@ const MainScreen = () => {
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     if (selectedCity) {
-      handleCitySelect(selectedCity);
+      if (selectedCity.isCurrentLocation) {
+        fetchWeatherByLocation(location.latitude, location.longitude);
+      } else {
+        handleCitySelect(selectedCity); // Re-fetch data for the selected city
+      }
     }
     setRefreshing(false);
   }, [selectedCity, location]);
@@ -282,7 +297,7 @@ const MainScreen = () => {
          style={styles.settingsContainer}
          onPress={() => navigation.navigate('SettingsScreen')} // Basıldığında ayarlar ekranına git
         >
-        <Icon name="settings-sharp" size={28} color="black" />
+        <Icon name="settings-sharp" size={28} color="white" />
         </TouchableOpacity>
           <WeatherCard weather={weather} />
           <HourlyWeatherCard hourlyWeather={hourlyWeather} />
@@ -300,15 +315,15 @@ const MainScreen = () => {
           <MapComponent location={location}/>
           <SocialShareBar/>
           <Footer/>
-          <StatusBar backgroundColor="#87CEEB" barStyle="light-content" translucent />
-        </ScrollView>
+          <StatusBar backgroundColor="#87CEEB" />
+          </ScrollView>
       </LinearGradient>
 
       <Modal transparent={true} animationType="fade" visible={loading}>
         <View style={styles.loadingOverlay}>
           <Image source={require('../assets/icon.png')} style={{ width: 200, height: 200 }} />
           <Fold size={48} color="#f5b406" />
-          <StatusBar backgroundColor="#e9e6d9" barStyle="light-content" translucent />
+          <StatusBar backgroundColor="#e9e6d9"  />
         </View>
       </Modal>
     </SafeAreaView></WeatherProvider>
@@ -324,10 +339,8 @@ const styles = StyleSheet.create({
   },
 settingsContainer: {
   position: 'absolute',
-  top: 10,
-  right: 10,
   zIndex: 10, // Diğer bileşenlerin üzerinde olmasını sağlar
-  alignItems: 'center',
+  margin:10
 },
   settingsText: {
     color: '#fff',
