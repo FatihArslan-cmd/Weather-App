@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Text } from 'react-native-paper';
-import { View, StyleSheet, Image } from 'react-native';
+import { View, StyleSheet, Image,TouchableOpacity } from 'react-native';
 import WeatherDetails from './WeatherDetails';
 import WeatherDescription from './WeatherDescription';
 import CustomText from './CustomText';
 import updateDateTime from '../utils/updateDateTime';
 import { useWeather } from '../context/WeatherContext';
-
+import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Ionicons'; // You can choose any icon set, such as MaterialIcons, FontAwesome, etc.
 const WeatherCard = ({ weather, error }) => {
   const [dateTime, setDateTime] = useState('');
   const { setTemperature, setHumidity } = useWeather(); // Context'ten setter'ları al
+  const navigation = useNavigation(); 
 
   useEffect(() => {
     updateDateTime(setDateTime); // Set the date and time immediately
@@ -28,6 +30,12 @@ const WeatherCard = ({ weather, error }) => {
 
   return (
     <Card style={styles.card}>
+        <TouchableOpacity 
+         style={styles.settingsContainer}
+         onPress={() => navigation.navigate('SettingsScreen')} // Basıldığında ayarlar ekranına git
+ >
+        <Icon name="settings-sharp" size={32} color="black" />
+        </TouchableOpacity>
       <Card.Title title={dateTime} titleStyle={styles.cardTitle} />
       <Card.Content>
         {weather ? (
@@ -67,6 +75,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 5,
     marginBottom: 10,
+  },
+  settingsContainer: {
+    position: 'absolute',
+    zIndex: 101, // Diğer bileşenlerin üzerinde olmasını sağlar
   },
   cardTitle: {
     textAlign: 'center',

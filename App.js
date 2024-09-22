@@ -13,18 +13,16 @@ const Stack = createStackNavigator();
 const App = () => {
   return (
     <NetInfoProvider>
-    <NavigationContainer>
+     <NavigationContainer>
       <Stack.Navigator
-screenOptions={{
-  ...TransitionPresets.SlideFromRightIOS,
-  headerShown: false,
-}}
-      >
+         screenOptions={{
+         ...TransitionPresets.SlideFromRightIOS,
+          headerShown: false,}}>
         <Stack.Screen name="MainScreen" component={MainScreen} />
         <Stack.Screen name="OfflineScreen" component={OfflineScreen} />
         <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
       </Stack.Navigator>
-    </NavigationContainer>
+     </NavigationContainer>
     </NetInfoProvider>
   );
 };

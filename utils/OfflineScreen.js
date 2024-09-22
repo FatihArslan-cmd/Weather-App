@@ -21,9 +21,7 @@ const OfflineScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {Platform.OS === 'android' && (
-        <StatusBar backgroundColor="red" barStyle="light-content" />
-      )}
+        <StatusBar backgroundColor="red"  />
     </SafeAreaView>
   );
 };

@@ -50,9 +50,7 @@ const MainScreen = () => {
   const [moonData, setMoonData] = useState({ moonrise: null, moonset: null, moonPhase: null });
   const [forecast, setForecast] = useState(null); // 5-day forecast state
 
-  const navigation = useNavigation(); // Navigasyon nesnesi
-
-  // Animated value for scroll position
+  
   const scrollY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -293,12 +291,6 @@ const MainScreen = () => {
             { useNativeDriver: false } // Change to `true` if you're animating transform properties only
           )}
         >
-        <TouchableOpacity 
-         style={styles.settingsContainer}
-         onPress={() => navigation.navigate('SettingsScreen')} // Basıldığında ayarlar ekranına git
-        >
-        <Icon name="settings-sharp" size={28} color="white" />
-        </TouchableOpacity>
           <WeatherCard weather={weather} />
           <HourlyWeatherCard hourlyWeather={hourlyWeather} />
           <FiveDayWeather forecast={forecast} />
@@ -339,8 +331,7 @@ const styles = StyleSheet.create({
   },
 settingsContainer: {
   position: 'absolute',
-  zIndex: 10, // Diğer bileşenlerin üzerinde olmasını sağlar
-  margin:10
+  zIndex: 101, // Diğer bileşenlerin üzerinde olmasını sağlar
 },
   settingsText: {
     color: '#fff',
