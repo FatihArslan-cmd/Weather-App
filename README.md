@@ -20,10 +20,17 @@ Key Features:<br/>
 
 🌡️ Real-Time Weather Updates: Get accurate weather information in real-time based on your current location.<br/> ⛅ 7-Day Detailed Forecast: View detailed weather predictions for the next 7 days.<br/> 🌍 Location-Based Information: Automatically fetch weather details for your area using geolocation.<br/> 📱 Simple & Clean User Interface: An intuitive interface that’s easy to navigate.<br/> 🔍 Comprehensive Data: Access extra information like UV index, moon phases, air quality, and more.<br/>
 
-<hr>
+## <a id="screenshots"></a>📷 Screenshots
+
+<p align="center"> <img src="https://github.com/user-attachments/assets/f158b08f-9247-4a7e-b8e5-1853346d0b35" width="300" alt="Screenshot 1"/> 
+ <img src="https://github.com/user-attachments/assets/59060865-a872-4fcc-be8d-ba5f38072539" width="300" alt="Screenshot 2"/>
+ <img src="https://github.com/user-attachments/assets/34d019e6-a641-4232-8f5b-210cdc0eb993" width="300" alt="Screenshot 3"/>
+ <img src="https://github.com/user-attachments/assets/7d4aac17-30bb-43c2-b343-9995900bc2e1" width="300" alt="Screenshot 4"/>
+ </p> <hr>
+
 <a id="getting-started"></a>🚀 Getting Started
 To get a local copy up and running, follow these simple steps.
-
+You have to have a OpenWeather API.If you dont have one ,Get one.
 <a id="prerequisites"></a>📋 Prerequisites
 Ensure you have the following software installed:
 
@@ -69,7 +76,6 @@ Explore various features such as viewing real-time updates, 7-day forecasts, and
 Enjoy a clean and user-friendly interface.
 <hr>
 
-## <a id="screenshots"></a>📷 Screenshots
 
 
 
