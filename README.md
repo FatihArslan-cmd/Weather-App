@@ -22,7 +22,8 @@ Key Features:<br/>
 
 ## <a id="screenshots"></a>📷 Screenshots
 
-<p align="center"> <img src="https://github.com/user-attachments/assets/f158b08f-9247-4a7e-b8e5-1853346d0b35" width="300" alt="Screenshot 1"/> 
+<p align="center">
+ <img src="https://github.com/user-attachments/assets/29f76a37-5591-4f15-900a-199ae010e01f" width="300" alt="Screenshot 1"/> 
  <img src="https://github.com/user-attachments/assets/59060865-a872-4fcc-be8d-ba5f38072539" width="300" alt="Screenshot 2"/>
  <img src="https://github.com/user-attachments/assets/34d019e6-a641-4232-8f5b-210cdc0eb993" width="300" alt="Screenshot 3"/>
  <img src="https://github.com/user-attachments/assets/7d4aac17-30bb-43c2-b343-9995900bc2e1" width="300" alt="Screenshot 4"/>
